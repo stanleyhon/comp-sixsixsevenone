@@ -17,7 +17,7 @@ int main (void) {
         }
     }
 
-    for (auto i = v.begin (); i != v.end (); i++) {
+    for (std::vector<int>::const_iterator i = v.begin (); i != v.end (); i++) {
         std::cout << *i << std::endl;
     }
 

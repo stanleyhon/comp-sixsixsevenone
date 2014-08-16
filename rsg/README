@@ -1,0 +1,34 @@
+RSG - Random Sentence Generator - README file
+
+STUB DETAILS-
+
+* Files:
+
+Makefile         
+README
+definition.cpp
+definition.h
+production.cpp
+production.h
+random.cpp         <-- DO NOT MODIFY!
+random.h           <-- DO NOT MODIFY!
+rsg.cpp   
+grammars/*.g
+
+* Your task:
+
+Implement the missing code to produce a working program, one which is able
+to read-in a grammar file and then produce three random sentences from that
+grammar.
+
+You should not need to modify the interfaces provided, but you may (will?) 
+need to write helper fuctions. You should try really, really hard to think 
+about how you might approach the problem from a C++ perspective rather than
+a C perspective. Make use of C++ library features whenever possible, in 
+particular, parsing the grammar file should be quite easy if you use the 
+C++ I/O functionality properly!
+
+A few grammars are provided for testing, but you should devise your own
+test cases and additional grammars. 
+
+Good luck!

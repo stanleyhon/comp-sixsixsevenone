@@ -1,0 +1,4 @@
+rsg.o: rsg.cpp definition.h production.h
+random.o: random.cpp random.h
+production.o: production.cpp production.h
+definition.o: definition.cpp definition.h production.h random.h
