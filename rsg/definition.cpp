@@ -6,8 +6,11 @@
  */ 
  
 #include "definition.h"
-#include "random.h"
 #include "assert.h"
+#include "limits"
+
+// Preserve the state of rg
+RandomGenerator rg;
 
 /**
  * Constructor: Definition
@@ -32,7 +35,9 @@ Definition::Definition(ifstream& infile)
    // nextToken now contains this definition's title
    // save that
    nonterminal = nextToken;
-   // cout << "Definition constructor called with nonterminal \n" << nonterminal << endl;
+#ifdef DEBUG
+   cout << "Definition constructor called with nonterminal \n" << nonterminal << endl;
+#endif
 
    // Now move on to start reading each production.
    bool finished = false;
@@ -43,8 +48,11 @@ Definition::Definition(ifstream& infile)
       possibleExpansions.push_back (*p);
       
       // Check if there's a next line
+      // Throw out any rubbish after the semi colon (
+      infile.ignore (numeric_limits<streamsize>::max(), '\n');
       if (infile.peek () == '}') finished = true;
    }
+
 }
 
 /**
@@ -58,7 +66,6 @@ const Production& Definition::getRandomProduction() const
 {
    int low = 0;
    int high = possibleExpansions.size () - 1; // Convert from count to index.
-   RandomGenerator rg;
    int returnIndex = rg.getRandomInteger (low, high);
    assert (returnIndex >= low && returnIndex <= high);
 

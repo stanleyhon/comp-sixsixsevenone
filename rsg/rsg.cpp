@@ -43,6 +43,36 @@ static void readGrammar(ifstream& infile, map<string, Definition>& grammar)
 }
 
 /**
+ * When passed the iterator for the current word being "resolved"
+ * and the last word, decides whether or not we should put a space after this word.
+ *
+ * @params current is an iterator that is the current word that was just printed
+ * @params end is the .end () call on the Production object being worked on
+ */
+static void spaceNeeded (Production::const_iterator current, Production::const_iterator end)
+{
+   // deal with the thing where, if the next word is punctuation
+   // there is no space.
+   // Deal with the thing where if there is no next word, there is
+   // no space.
+   auto nextWord = current + 1;
+   if (nextWord != end)
+   {
+      auto test = *nextWord; 
+      char c = test.at (0);
+      if (c != ',' && 
+          c != '.' && 
+          c != '?' && 
+          c != '!' && 
+          c != ':')
+      { 
+         cout << " ";
+      }
+   }
+   return;
+}
+
+/**
  * Given the grammar map, and a string, decides whether to attempt to
  * resolve the string (i.e. nonterminal) or just print the string (terminal)
  *
@@ -58,7 +88,7 @@ static void resolveDefinition (const map<string, Definition>& grammar, const str
    // Check if root is a nonterminal or terminal
    if (root.at (0) != '<') // non-terminal
    {       
-      cout << root << " ";
+      cout << root;
       return;
    }
    else // terminal
@@ -78,6 +108,7 @@ static void resolveDefinition (const map<string, Definition>& grammar, const str
          // If it's terminal - it'll just print
          // If it's not terminal - it'll attempt to resolve
          resolveDefinition (grammar, *word);
+         spaceNeeded (word, p.end ());
       }
    }
    return;
@@ -102,18 +133,12 @@ static void generateRandomSentences(const map<string, Definition>& grammar,
    { 
       // find <start> nonterminal
       assert (grammar.find ("<start>") != grammar.end ());
-      const Definition & d = grammar.at ("<start>");
 
-      // Get production
-      const Production & p = d.getRandomProduction (); 
+      resolveDefinition (grammar, "<start>");
 
-      // Iterate over it.
-      for (auto word = p.begin (); word != p.end (); word++)
-      {
-         resolveDefinition (grammar, *word);
-      }
+      cout << endl;
 
-      cout << endl << endl;
+      if (count + 1 != numSentencesNeeded) cout << endl;
 
       count++;
    }

@@ -9,6 +9,7 @@
  */
 
 #include "production.h"
+#include "random.h"
 #include <vector>
 
 using namespace std;  

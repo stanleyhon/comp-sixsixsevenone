@@ -16,18 +16,20 @@
 
 Production::Production(ifstream& infile)
 {
-   // cout << "New production..." << endl;
+#ifdef DEBUG
+   cout << "New production..." << endl;
+#endif
    string nextToken;
    infile >> nextToken;
    while (nextToken.compare (";") != 0)
    {
-      // cout << "Production adding " << nextToken << endl;
+#ifdef DEBUG
+      cout << "Production adding [" << nextToken << "]" << endl;
+#endif
       phrases.push_back (nextToken);
       infile >> nextToken;
    }
-
-   // read the new line after the semi-colon as well
-   infile.get ();
-
-   // cout << "End" << endl;
+#ifdef DEBUG
+   cout << "End" << endl;
+#endif
 }
