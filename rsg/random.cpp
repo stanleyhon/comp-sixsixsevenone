@@ -18,8 +18,8 @@
 
 RandomGenerator::RandomGenerator()
 {
-  srand(time(NULL));
-//   srand(6771);
+//  srand(time(NULL));
+  srand(6771);
 }
 
 /**
