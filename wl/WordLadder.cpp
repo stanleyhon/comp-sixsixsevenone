@@ -9,10 +9,12 @@
 #include "lexicon.h"
 #include <queue>
 #include <vector>
+#include <list>
 #include <map>
 #include <iostream>
 #include <ctype.h> // for tolower ()
 #include <assert.h>
+#include <algorithm> // for sort
 
 using namespace std;
 
@@ -30,6 +32,7 @@ typedef map<string, int> map_t;
 bool findWord (string s, int level);
 void generateNextWord (ladder_t baseLadder, int level);
 bool serviceQueue (void);
+void printResults (void);
 
 const string alphabet = "abcdefghijklmnopqrstuvwxyz";
 string startWord;
@@ -38,6 +41,9 @@ map_t seenWords; // map used to keep track of seen words
 queue_t q; // queue used to implement BFS
 Lexicon dictionary ("EnglishWords.dat"); 
 bool firstResult = true;
+
+// store results in a list so we can sort them before printing
+list<ladder_t> results;
 
 int main() {
     cout << "Enter start word (RETURN to quit): ";
@@ -86,6 +92,9 @@ int main() {
 
     if (solutionFound == false) {
         cout << "No ladder found.\n";
+    } else {
+        // print the results
+        printResults ();
     }
 
     return EXIT_SUCCESS;
@@ -113,13 +122,7 @@ bool serviceQueue (void) {
                 firstResult = false;
             }
 
-            for (auto word = currentLadder.begin (); word != currentLadder.end (); word++) {
-                cout << *word;
-                if (word + 1 != currentLadder.end ()) {
-                    cout << " ";
-                }
-            }
-            cout << endl;
+            results.push_back (currentLadder);
 
             return true;
         }
@@ -230,3 +233,37 @@ bool findWord (string s, int level) {
 #endif
     return true;
 }
+
+// sort the results list 
+// print it
+void printResults (void) {
+    list<string> printList;
+
+    // for each result in the results 
+    for (auto result = results.begin (); result != results.end (); result++) {
+        string newString = "";
+        // combine each of the strings into one big result string
+        for (auto s = result->begin (); s != result->end (); s++) {
+            newString.append (*s);
+            if (s + 1 != result->end ()) {
+                newString.append (" ");
+            }
+        }
+
+        // and put it on the printlist
+        printList.push_back (newString);
+    }
+
+    // sort the printlist
+    printList.sort();
+
+    // print it in the format they want.
+    for (auto r = printList.begin (); r != printList.end (); r++) {
+        cout << *r << "\n";
+    }
+
+    return;
+}
+
+
+
