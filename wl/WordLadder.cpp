@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <ctype.h> // for tolower ()
 #include <assert.h>
 
 using namespace std;
@@ -49,6 +50,15 @@ int main() {
 
     if (destinationWord.length () != startWord.length ()) return EXIT_SUCCESS;
     if (destinationWord.length () == 0) return EXIT_SUCCESS;
+
+    // Lowercase them both
+    for (auto c = startWord.begin (); c != startWord.end (); c++) {
+        *c = tolower (*c);
+    }
+    for (auto c = destinationWord.begin (); c != destinationWord.end (); c++) {
+        *c = tolower (*c);
+    }
+
 
     // Put the first element on
     ladder_t wordLadder;
