@@ -48,8 +48,15 @@ int main() {
     cout << "Enter destination word: ";
     cin >> destinationWord;
 
-    if (destinationWord.length () != startWord.length ()) return EXIT_SUCCESS;
-    if (destinationWord.length () == 0) return EXIT_SUCCESS;
+    if (destinationWord.length () != startWord.length ()) {
+        cout << "No ladder found.\n";
+        return EXIT_SUCCESS;
+    }
+
+    if (destinationWord.length () == 0) {
+        cout << "No ladder found.\n";
+        return EXIT_SUCCESS;
+    }
 
     // Lowercase them both
     for (auto c = startWord.begin (); c != startWord.end (); c++) {
