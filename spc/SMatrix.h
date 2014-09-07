@@ -56,8 +56,8 @@ class SMatrix {
   int operator()(size_type, size_type) const throw(MatrixError);
   
   // operations
-  inline size_type rows() const;
-  inline size_type cols() const;
+  inline size_type rows() const { return 5; };
+  inline size_type cols() const { return 5; };
   bool setVal(size_type, size_type, int) throw(MatrixError);
 
   // `iterator' operations
