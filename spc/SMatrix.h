@@ -6,7 +6,8 @@
 #include <map>
 #include <string>
 #include <utility>
-
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
 
 
@@ -75,11 +76,20 @@ class SMatrix {
  private:
   // private data members
   int *vals_;
+  int valsLength_;
+  int valsSize_;
+
   size_type *cidx_;
+  int cidxLength_;
+  int cidxSize_;
+
   std::map< size_type, std::pair<size_t, unsigned int> > ridx_;
 
+  size_type rows_;
+  size_type columns_;
   // you may/should augment the private interface as required by your implementation
-
+  
+  void allocateArrays (int rows, int columns);
 };
 
 #endif
