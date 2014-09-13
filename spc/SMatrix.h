@@ -101,7 +101,7 @@ class SMatrix {
   // Given a new non-zero value, row and column, shifts the cidx array up
   // and inserts the column in the correct position
   // Returns whether or not Cidx needed to be extended
-  bool insertCidx (int index, int value);
+  bool insertCidx (int index, size_type value);
 
   // Given an index of where the new value should go, shifts the vals array up
   // and inserts the value in the correct position

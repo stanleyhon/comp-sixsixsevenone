@@ -217,7 +217,7 @@ bool SMatrix::setValAdd (size_type row, size_type column, int value) {
 
     // shift cidx up by 1
     // put in our value column
-    insertCidx (newIndex, value);
+    insertCidx (newIndex, column);
 
     // shift vals up by 1
     // put in our value
@@ -234,8 +234,8 @@ void SMatrix::incrementRidx (size_type insertionRow) {
     return;
 }
 
-bool SMatrix::insertCidx (int index, int value) {
-    assert (index >= 0 && index < cidxLength_);
+bool SMatrix::insertCidx (int index, size_type column) {
+    assert (index >= 0 && index <= cidxLength_);
     bool resized = false;
     // check if we need to expand array
     if (cidxLength_ == cidxSize_) { // need to resize array
@@ -269,13 +269,13 @@ bool SMatrix::insertCidx (int index, int value) {
         cidx_[idx] = cidx_[idx - 1];
     }
 
-    cidx_[index] = value; // put it in
+    cidx_[index] = column; // put it in
 
     return resized;
 } 
 
 bool SMatrix::insertVals (int index, int value) {
-    assert (index >= 0 && index < valsLength_);
+    assert (index >= 0 && index <= valsLength_);
     bool resized = false;
     // check if we need to expand array
     if (valsLength_ == valsSize_) { // need to resize array
@@ -315,8 +315,74 @@ bool SMatrix::insertVals (int index, int value) {
 } 
 
 bool SMatrix::setValDelete (size_type row, size_type column, int value) {
+    assert (value == 0);
+    // no resize required for reduction
+    // do a hastable lookup to figure out the range of which the value is at
+    auto lookup = ridx_.find (row);
+    if (lookup == ridx_.end ()) { // It was zero to begin with
+        return false;
+    }
 
-    return true;
+    int startIndex = lookup->second.first; // the pair's left value, i.e. range start
+    // the pair's right value, i.e. how many elements
+    // need to subtract one, since starting at 3, and 3 elements = last valid element being 5
+    int endIndex = startIndex + lookup->second.second - 1;
+    std::cout << "startIndex is " + std::to_string (startIndex) << std::endl;
+    std::cout << "endIndex is " + std::to_string (endIndex) << std::endl;
+    int targetIndex = -1;
+    while (startIndex <= endIndex) {
+        std::cout << "cidx has " << cidx_[startIndex] << " at " << startIndex << std::endl;
+        if (cidx_[startIndex] == column) { // found it
+            targetIndex = startIndex;
+            break;
+        }
+        startIndex++;
+    }
+    
+    assert (targetIndex != -1);
+    
+    // fix up ridx
+    // see if our entry needs removal entirely
+    if (lookup->second.second == 1) { // there's only 1 thing in the row
+        ridx_.erase (lookup);
+    } else {
+        lookup->second.second--; // otherwise just reduce it's range by 1
+    }
+    // now also reduce the start position of all latter rows
+    for (auto i = ridx_.begin (); i != ridx_.end (); ++i) {
+        if (i->first > row) {
+            i->second.first--; // need to shift this range's start index down 1
+        }
+    }
+
+    // fix up cidx;
+    // example:
+    // cidx array of length 6, means index 5 is the highest.
+    // shifting elements left 1 means the final element does not get modified
+    // just set it to 0, since in all cases of this function, the last element in the array
+    // will be unset/zeroed
+    assert (cidxLength_ != 0);
+    for (int idx = targetIndex; idx < cidxLength_ - 1; idx++) {
+        cidx_[idx] = cidx_[idx + 1];
+    }
+
+    // numerical to index so -1
+    cidx_[cidxSize_ - 1] = 0;
+
+    cidxLength_--;
+
+    // fix up vals
+    assert (valsLength_ != 0);
+    for (int idx = targetIndex; idx < valsLength_ - 1; idx++) {
+        vals_[idx] = vals_[idx + 1];
+    }
+
+    // numerical to index so -1
+    vals_[valsSize_ - 1] = 0;
+
+    valsLength_--;
+
+    return false; 
 }
 
 
