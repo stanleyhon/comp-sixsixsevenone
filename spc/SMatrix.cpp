@@ -145,9 +145,180 @@ int SMatrix::operator()(size_type s1, size_type s2) const throw(MatrixError) {
     return s1;
 }
 
-bool SMatrix::setVal(size_type, size_type, int) throw(MatrixError) {
+bool SMatrix::setVal(size_type row, size_type column, int value) throw(MatrixError) {
+    // do bounds checking, throw MatrixError if wrong
+    if (row > rows_ - 1 || column > columns_ - 1) {
+        throw MatrixError ("Matrix bound error: (" + 
+                std::to_string (row) + ", " + std::to_string (column) + ") entry of " + 
+                std::to_string (rows_) + " x " + std::to_string (columns_) + " matrix\n");
+    }
+
+    // I don't think size errors can occur here
+
+    if (value == 0) {
+        return setValDelete (row, column, value);
+    } else {
+        return setValAdd (row, column, value);
+    }
+}
+
+bool SMatrix::setValAdd (size_type row, size_type column, int value) {
+    assert (value != 0);
+    // See if we have any entries already on the row
+    int newIndex = 0; // location where our new element should go in vals and cidx
+    if (ridx_.find (row) == ridx_.end ()) { // nothing on the row, new row
+        // insert the element into the map by reading closest previous row
+        // value and using that +1 as hastable values
+        int targetRow = row;
+        while (targetRow != 0) {
+            targetRow--;
+            auto lookup = ridx_.find (targetRow);
+            if (lookup != ridx_.end ()) { // found it!
+                // Example:
+                // ridx (2, 5) indicates 5 elements, starting from 2
+                // therefor, we want to put ourselves at index 7
+                newIndex = lookup->second.first + lookup->second.second;
+                // Since this is a new row, we are guaranteed to only have
+                // 1 non-zero element in the row
+                ridx_[row] = std::make_pair (newIndex, 1);
+                break;
+            }
+
+            // what if there's no rows before us?
+            if (targetRow == 0) { // and we didn't find anything there. we're zero.
+                ridx_[0] = std::make_pair (0, 1);
+            }
+        }
+
+    } else {
+        // modify the hashtable value to increase it's coverage range by 1
+        auto lookup = ridx_.find (row);
+        lookup->second.second++; // increment the coverage range by 1
+        
+        // figure out where it goes within that range, since cidx needs to stay
+        // in sorted column order
+        int idx = 0;
+        newIndex = lookup->second.first;
+        while (idx < lookup->second.second) { // check the cidx values within the range
+            if (cidx_[newIndex + idx] < column) {
+                idx++;
+            } else { // we're smaller (i.e. we're in the right spot)
+                newIndex += idx;
+                break;
+            }
+        }
+        // Check we're still within the range of our row
+        assert (newIndex >= lookup->second.first); // above or at floor
+        assert (newIndex < lookup->second.first + lookup->second.second); // below ceiling
+    }
+        
+    // move all hashtable rows after this one range starts up by 1
+    incrementRidx (row);
+
+    // shift cidx up by 1
+    // put in our value column
+    insertCidx (newIndex, value);
+
+    // shift vals up by 1
+    // put in our value
+    insertVals (newIndex, value);
+
     return true;
 }
+void SMatrix::incrementRidx (size_type insertionRow) {
+    for (auto i = ridx_.begin (); i != ridx_.end (); ++i) {
+        if (i->first > insertionRow) {
+            i->second.first++; // need to shift this one up
+        }
+    }
+    return;
+}
+
+bool SMatrix::insertCidx (int index, int value) {
+    assert (index >= 0 && index < cidxLength_);
+    bool resized = false;
+    // check if we need to expand array
+    if (cidxLength_ == cidxSize_) { // need to resize array
+        size_type * newCidx = new size_type[cidxSize_ * 2]; // double the array's size
+
+        // copy the old info into the new one.
+        memcpy (newCidx, cidx_, cidxLength_);
+
+        // free the old one
+        delete [] cidx_;
+
+        // hook the new one up
+        cidx_ = newCidx;
+
+        // setup the info variables
+        cidxSize_ = cidxSize_ * 2;
+
+        resized = true;
+    }
+
+    assert (cidxLength_ + 1 <= cidxSize_);
+
+    cidxLength_++; // there's going to be one more thing in the list now
+    
+    // example:
+    // say we have 5 things, cidxLength_ would be 5
+    // we need to insert a new one, so we increment cidxLength_ to 6
+    // index 5 would be the "new" spot of memory
+    // therefor use <
+    for (int idx = index + 1; idx < cidxLength_; idx++) {
+        cidx_[idx] = cidx_[idx - 1];
+    }
+
+    cidx_[index] = value; // put it in
+
+    return resized;
+} 
+
+bool SMatrix::insertVals (int index, int value) {
+    assert (index >= 0 && index < valsLength_);
+    bool resized = false;
+    // check if we need to expand array
+    if (valsLength_ == valsSize_) { // need to resize array
+        int * newVals = new int[valsSize_ * 2]; // double the array's size
+
+        // copy the old info into the new one.
+        memcpy (newVals, vals_, valsLength_);
+
+        // free the old one
+        delete [] vals_;
+
+        // hook the new one up
+        vals_ = newVals;
+
+        // setup the info variables
+        valsSize_ = valsSize_ * 2;
+
+        resized = true;
+    }
+
+    assert (valsLength_ + 1 <= valsSize_);
+
+    valsLength_++; // there's going to be one more thing in the list now
+    
+    // example:
+    // say we have 5 things, valsLength_ would be 5
+    // we need to insert a new one, so we increment valsLength_ to 6
+    // index 5 would be the "new" spot of memory
+    // therefor use <
+    for (int idx = index + 1; idx < valsLength_; idx++) {
+        vals_[idx] = vals_[idx - 1];
+    }
+
+    vals_[index] = value; // put it in
+
+    return resized;
+} 
+
+bool SMatrix::setValDelete (size_type row, size_type column, int value) {
+
+    return true;
+}
+
 
 void SMatrix::begin() const {
     return;
