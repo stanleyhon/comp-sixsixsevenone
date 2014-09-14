@@ -114,8 +114,9 @@ SMatrix::SMatrix(const std::initializer_list<std::initializer_list<int>>& il)
             int val = *i2;
             
             setVal (row, col, val);
-            
-            std::cout << row << col << val;
+#ifdef DEBUG 
+            std::cout << "row: " << row << " col: " << col << " val: " << val << std::endl;
+#endif
             continue;
         }
     }
@@ -269,9 +270,6 @@ void SMatrix::incrementRidx (size_type insertionRow) {
 }
 
 bool SMatrix::insertCidx (int index, size_type column) {
-#ifdef DEBUG
-    debugPrintArrays ();
-#endif
     assert (index >= 0 && index <= cidxLength_);
     bool resized = false;
     // check if we need to expand array
@@ -311,17 +309,10 @@ bool SMatrix::insertCidx (int index, size_type column) {
 
     cidx_[index] = column; // put it in
 
-#ifdef DEBUG
-    debugPrintArrays ();
-#endif
-
     return resized;
 } 
 
 bool SMatrix::insertVals (int index, int value) {
-#ifdef DEBUG
-    debugPrintArrays ();
-#endif
     assert (index >= 0 && index <= valsLength_);
     bool resized = false;
     // check if we need to expand array
@@ -357,10 +348,6 @@ bool SMatrix::insertVals (int index, int value) {
     }
 
     vals_[index] = value; // put it in
-
-#ifdef DEBUG
-    debugPrintArrays ();
-#endif
 
     return resized;
 } 
@@ -448,19 +435,48 @@ bool SMatrix::setValDelete (size_type row, size_type column, int value) {
 
 
 void SMatrix::begin() const {
+    iteratorRow_ = 0;
+    iteratorCol_ = 0;
     return;
 }
 
 bool SMatrix::end() const {
-    return true;
+    if (iteratorCol_ >= cols () || iteratorRow_ >= rows ()) { 
+        return true; 
+    } else { 
+        return false;
+    }
 }
 
 void SMatrix::next() const {
+    if (iteratorCol_ == cols () - 1) { // it's already up to the last column
+        iteratorCol_ = 0;
+        iteratorRow_++;
+    } else {
+        iteratorCol_++;
+    }
     return;
 }
 
 int SMatrix::value() const {
-    return 5;
+    assert (iteratorCol_ < cols () && iteratorRow_ < rows ());
+    // see if the row exists
+    auto lookup = ridx_.find (iteratorRow_);
+    if (lookup == ridx_.end ()) {
+        return 0;
+    } else {
+        int startIndex = lookup->second.first;
+        int idx = 0;
+        // see if the column exists
+        while (idx < lookup->second.second) {
+            if (cidx_[startIndex + idx] == iteratorCol_) { // found it!
+                return vals_[startIndex + idx];
+            } else {
+                idx++;
+            }
+        }
+        return 0;
+    }
 }
 
 // friends
@@ -481,6 +497,7 @@ SMatrix operator-(const SMatrix&, const SMatrix&) throw(MatrixError) {
 }
 
 SMatrix operator*(const SMatrix&, const SMatrix&) throw(MatrixError) {
+
     return SMatrix(1);
 }
 

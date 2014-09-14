@@ -84,6 +84,10 @@ class SMatrix {
   int cidxLength_;
   int cidxSize_;
 
+  // For iterator functionality
+  mutable unsigned int iteratorRow_;
+  mutable unsigned int iteratorCol_;
+
   std::map< size_type, std::pair<size_t, unsigned int> > ridx_;
 
   size_type rows_;
