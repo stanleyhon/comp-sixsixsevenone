@@ -12,7 +12,7 @@ CPPFLAGS = -Wall -Werror -O2 -std=c++11
 # enable this line for debugging
 # CPPFLAGS = -Wall -g -std=c++11
 
-default: test0 test1 test2 test3 test4 test5 test6
+default: test0 test1 test2 test3 test4 test5 test6 test7
 
 test0: SMatrix.h SMatrix.cpp test0.cpp
 	$(CXX) $(CPPFLAGS) -o test0 SMatrix.cpp test0.cpp
@@ -34,6 +34,10 @@ test5: SMatrix.h SMatrix.cpp test5.cpp
 
 test6: SMatrix.h SMatrix.cpp test6.cpp
 	$(CXX) $(CPPFLAGS) -o test6 SMatrix.cpp test6.cpp
+
+# stream constructor
+test7: SMatrix.h SMatrix.cpp test7.cpp
+	$(CXX) $(CPPFLAGS) -o test7 SMatrix.cpp test7.cpp
 clean: 
 	rm -rf *.o a.out core *.dSYM test[0-4]
 

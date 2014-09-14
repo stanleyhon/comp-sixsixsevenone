@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstddef>
 
+#define DEBUG
 
 // matrix error class
 class MatrixError : public std::exception {
@@ -57,8 +58,8 @@ class SMatrix {
   int operator()(size_type, size_type) const throw(MatrixError);
   
   // operations
-  inline size_type rows() const { return 5; };
-  inline size_type cols() const { return 5; };
+  inline size_type rows() const { return rows_; };
+  inline size_type cols() const { return columns_; };
   bool setVal(size_type, size_type, int) throw(MatrixError);
 
   // `iterator' operations
@@ -116,6 +117,10 @@ class SMatrix {
 
   // setVal delegates to this method when removing elements (i.e. adding zero elements)
   bool setValDelete (size_type row, size_type column, int value);
+
+#ifdef DEBUG
+  void debugPrintArrays (void) const;
+#endif
 
 };
 

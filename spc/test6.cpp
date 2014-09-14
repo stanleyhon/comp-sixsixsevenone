@@ -19,5 +19,13 @@ int main(void) {
     std::cout << "deleted 1,1 to 0\n";
     m.setVal (0, 1, 0);
     std::cout << "deleted 0,1 to 0\n";
+    std::cout << "PRINTING BLANK ARRAY";
+    std::cout << m;
+    m.setVal (0, 1, 5);
+    std::cout << "set 0,1 to 5\n";
+    m.setVal (1, 1, 6); 
+    std::cout << "set 1,1 to 6\n";
+    std::cout << "PRINTING ARRAY WITH 2 values @ 0,1 and 1,1,\n";
+    std::cout << m;
     return 0;
 }
