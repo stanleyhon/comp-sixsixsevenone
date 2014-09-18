@@ -17,17 +17,22 @@
 #include "SMatrix.h"
 
 int main(void) {
-  SMatrix a(500000000, 1000000000);
-  for (SMatrix::size_type i = 0; i < 200; ++i)
-    for (SMatrix::size_type j = 0; j < 200; ++j)
-      a.setVal(i + 1000000, j + 1000000, -1);
 
-  SMatrix b(1000000000, 500000000);
-  for (SMatrix::size_type i = 0; i < 200; ++i)
-    for (SMatrix::size_type j = 0; j < 200; ++j)
-      b.setVal(i + 1000000, j + 1000000, -1);
+    // 500 million, 1 billion
+    
+    SMatrix a(500000000, 1000000000);
+    for (SMatrix::size_type i = 0; i < 200; ++i)
+        for (SMatrix::size_type j = 0; j < 200; ++j)
+            // 1 million + i, 1 million + j
+            a.setVal(i + 1000000, j + 1000000, -1);
 
-  std::cout << a * b << std::endl;
+    // 1 billion, 500 million
+    SMatrix b(1000000000, 500000000);
+    for (SMatrix::size_type i = 0; i < 200; ++i)
+        for (SMatrix::size_type j = 0; j < 200; ++j)
+            b.setVal(i + 1000000, j + 1000000, -1);
 
-  return 0;
+    std::cout << a * b << std::endl;
+
+    return 0;
 }

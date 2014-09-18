@@ -27,5 +27,22 @@ int main(void) {
     std::cout << "set 1,1 to 6\n";
     std::cout << "PRINTING ARRAY WITH 2 values @ 0,1 and 1,1,\n";
     std::cout << m;
+
+    m.setVal (4, 1, 66);
+    assert (m (4,1) == 66);
+    m.setVal (4, 2, 67);
+    assert (m (4,2) == 67);
+    m.setVal (4, 3, 68);
+    assert (m (4,3) == 68);
+    m.setVal (4, 4, 69);
+    assert (m (4,4) == 69);
+
+    m.setVal (1, 1, -69);
+    assert (m (1,1) == -69);
+
+    assert (m == m);
+
+    std::cout << "assertions passed\n";
+
     return 0;
 }

@@ -154,7 +154,31 @@ SMatrix& SMatrix::operator*=(const SMatrix& s) throw(MatrixError) {
 }
 
 int SMatrix::operator()(size_type s1, size_type s2) const throw(MatrixError) {
-    return s1;
+    if (s1 >= rows () || s2 >= cols ()) {
+        throw MatrixError ("Matrix bound error: (" + 
+                std::to_string (s1) + ", " + std::to_string (s2) + ") entry of " +
+                std::to_string (rows ()) + " x " + std::to_string (cols ()) + " matrix\n");
+    }
+
+    // see if the row exists
+    auto lookup = ridx_.find (s1);
+    if (lookup == ridx_.end ()) {
+        return 0;
+    } else {
+        int startIndex = lookup->second.first;
+        int idx = 0;
+        // see if the column exists
+        while (idx < lookup->second.second) {
+
+            if (cidx_[startIndex + idx] == s2) { // found it!
+                assert (vals_[startIndex + idx] != 0);
+                return vals_[startIndex + idx];
+            }            
+            idx++;
+        }
+        std::cout << "RETURNING ZERO FROM END\n";
+        return 0;
+    }
 }
 
 bool SMatrix::setVal(size_type row, size_type column, int value) throw(MatrixError) {
@@ -166,6 +190,9 @@ bool SMatrix::setVal(size_type row, size_type column, int value) throw(MatrixErr
     }
 
     // I don't think size errors can occur here
+#ifdef DEBUG
+    std::cout << "setval called with " << row << " " << column << " " << value << std::endl;
+#endif
 
     if (value == 0) {
         return setValDelete (row, column, value);
@@ -176,6 +203,7 @@ bool SMatrix::setVal(size_type row, size_type column, int value) throw(MatrixErr
 
 bool SMatrix::setValAdd (size_type row, size_type column, int value) {
     assert (value != 0);
+    
     // See if we have any entries already on the row
     int newIndex = 0; // location where our new element should go in vals and cidx
     if (ridx_.find (row) == ridx_.end ()) { // nothing on the row, new row
@@ -197,6 +225,7 @@ bool SMatrix::setValAdd (size_type row, size_type column, int value) {
             // insert the element into the map by reading closest previous row
             // value and using that +1 as hastable values
             int targetRow = row;
+            bool successful = false;
             while (targetRow != 0) {
                 targetRow--;
                 auto lookup = ridx_.find (targetRow);
@@ -208,39 +237,46 @@ bool SMatrix::setValAdd (size_type row, size_type column, int value) {
                     // Since this is a new row, we are guaranteed to only have
                     // 1 non-zero element in the row
                     ridx_[row] = std::make_pair (newIndex, 1);
+                    successful = true;
                     break;
                 }
             }
+            assert (successful == true);
             assert (targetRow >= 0);
         }
-    } else {
-#ifdef DEBUG
-        std::cout << "setValAdd modifying old row\n";
-#endif
+    } else { // existing row, there are nonzeros on this row
         // modify the hashtable value to increase it's coverage range by 1
         auto lookup = ridx_.find (row);
+        assert (lookup != ridx_.end ());
+
+        // see if it already exists, and just modify it then
+        int cidxIndex = lookup->second.first;
+        int idx = 0;
+        while (idx < lookup->second.second) {
+            if (cidx_[cidxIndex + idx] == column) { // there's already an entry for it
+                vals_[cidxIndex + idx] = value;
+                return false;
+            }
+            idx++;
+        }
+
+        // It's a new entry, so we're gonna need extra range here
         lookup->second.second++; // increment the coverage range by 1
         
         // figure out where it goes within that range, since cidx needs to stay
         // in sorted column order
-        int idx = 0;
-        newIndex = lookup->second.first;
-        while (idx < lookup->second.second) { // check the cidx values within the range
-            if (cidx_[newIndex + idx] < column) {
-                newIndex++;
-                idx++;
-            } else { // we're smaller (i.e. we're in the right spot)
-#ifdef DEBUG
-                std::cout << "newIndex is " << newIndex << std::endl;
-#endif         
-                newIndex++;
-                idx++;
-                break;
+        newIndex = -1;
+        int rangeStart = lookup->second.first;
+        idx = 0;
+        while (idx < lookup->second.second) {
+            if (idx + 1 < lookup->second.second && cidx_[rangeStart + idx + 1] > column) {
+                // found the spot
+                newIndex = rangeStart + idx + 1;
+            } else if (idx + 1 == lookup->second.second) {
+                newIndex = rangeStart + idx;
             }
+            idx++;
         }
-
-        // the above loop always sets it to the correct index + 1
-        newIndex--;
 
         // Check we're still within the range of our row
         assert (newIndex >= lookup->second.first); // above or at floor
@@ -412,9 +448,6 @@ bool SMatrix::setValDelete (size_type row, size_type column, int value) {
 
     cidxLength_--;
 
-#ifdef DEBUG
-    debugPrintArrays ();
-#endif
     // fix up vals
     assert (valsLength_ != 0);
     for (int idx = targetIndex; idx < valsLength_ - 1; idx++) {
@@ -480,12 +513,50 @@ int SMatrix::value() const {
 }
 
 // friends
-bool operator==(const SMatrix&, const SMatrix&) {
+bool operator==(const SMatrix& m1, const SMatrix& m2) {
+    if (m1.rows () == m2.rows () && m1.cols () == m2.cols ()) {
+        // check columns
+        if (m1.cidxLength_ == m2.cidxLength_) {
+            int idx = 0;
+            while (idx < m1.cidxLength_) {
+                if (m1.cidx_[idx] != m2.cidx_[idx]) {
+                    return false;
+                }
+                idx++;
+            }
+        } else {
+            return false;
+        }
+
+        // check rows
+        if (m1.ridx_.size () == m2.ridx_.size ()) {
+            auto m1it = m1.ridx_.begin ();
+            auto m2it = m2.ridx_.begin ();
+            while (m1it != m1.ridx_.end () && m2it != m2.ridx_.end ()) {
+                if (m1it->first != m2it->first) {
+                    return false;
+                }
+                if (m1it->second.first != m2it->second.first) {
+                    return false;
+                }
+                if (m1it->second.second != m2it->second.second) {
+                    return false;
+                }
+                ++m1it;
+                ++m2it;
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+        
     return true;
 }
 
-bool operator!=(const SMatrix&, const SMatrix&) {
-    return false;
+bool operator!=(const SMatrix& s1, const SMatrix& s2) {
+    return !(s1 == s2);
 }
 
 SMatrix operator+(const SMatrix&, const SMatrix&) throw(MatrixError) {
@@ -496,9 +567,56 @@ SMatrix operator-(const SMatrix&, const SMatrix&) throw(MatrixError) {
     return SMatrix(1);
 }
 
-SMatrix operator*(const SMatrix&, const SMatrix&) throw(MatrixError) {
+SMatrix operator*(const SMatrix& a, const SMatrix& b) throw(MatrixError) {
+    // Check sizes
+    if (a.cols () != b.rows ()) {
+        throw MatrixError ("Matrix size error: 9" + 
+                std::to_string (a.rows ()) + " x " + std::to_string (a.cols ()) + ") * (" +
+                std::to_string (b.rows ()) + " x " + std::to_string (b.cols ()) + ")\n");
+    }
 
-    return SMatrix(1);
+    // resulting matrix is of size a's row, b's cols
+    SMatrix product (a.rows (), b.cols ());
+
+    // figure out the columns which will actually need calculating
+    // ie. the nonzero columns
+    // remember them in a map
+    // TODO: Amortise this by building it on insertions?
+    std::map <SMatrix::size_type, SMatrix::size_type> validColumns;
+    int idx = 0;
+    while (idx < a.cidxLength_) {
+        validColumns[a.cidx_[idx]] = 1;
+        idx++;
+    }
+
+    // for every valid row in A
+    for (auto currentRow = a.ridx_.begin (); currentRow != a.ridx_.end (); ++currentRow) {
+        // for every valid column in B
+        for (auto currentCol = validColumns.begin (); currentCol != validColumns.end (); ++currentCol) {
+
+            // calculate [currentRow, currentCol] for the product array
+            // move across currentRow of a, and check all the valid [currentRow,col] combinations 
+            // (use ridx_[currentRow] to get them
+           
+            // this is the start of the range of valid column values for currentRow
+            int aIdx = a.ridx_.find(currentRow->first)->second.first;
+            int count = 0;
+            int total = 0;
+            while (count < a.ridx_.find(currentRow->first)->second.second) { // only do the right number
+                // use A's valid(nonzero) column, to see if we have a corresponding nonzero
+                int bValue = b (a.cidx_[aIdx + count], currentCol->first);
+                if (bValue != 0) {
+                    total += a (currentRow->first, a.cidx_[aIdx + count]) * bValue;
+                }
+                count++;
+            }
+            if (total != 0) {
+                product.setVal (currentRow->first, currentCol->first, total);
+                total = 0;
+            }
+        }
+    }
+    return product;
 }
 
 SMatrix transpose(const SMatrix&) {
@@ -510,9 +628,6 @@ std::ostream& operator<<(std::ostream &os, const SMatrix &m) {
 
     assert (m.rows() != 0 && m.cols() != 0);
 
-#ifdef DEBUG
-    m.debugPrintArrays ();
-#endif
     // print (rows, columns, num-nonzero)\n
     os << "(" << m.rows() << "," << m.cols() << "," << m.valsLength_ << ")" << std::endl;
 
@@ -553,12 +668,17 @@ void SMatrix::debugPrintArrays (void) const {
     }
     std::cout << "\n";
     
-    idx = 0;
     std::cout << "CIDX: ";
-    while (idx < cidxLength_) {
-        std::cout << cidx_[idx] << " ";
-        idx++;
+    for (auto i = ridx_.begin (); i != ridx_.end (); ++i) {
+        int innerIdx = i->second.first;
+        std::cout << "*ROW " << i->first << " *: ";
+        while (innerIdx < i->second.first + i->second.second) {
+            std::cout << cidx_[innerIdx] << "[" << innerIdx << "] ";
+            innerIdx++;
+        }
+        std::cout << "\n";
     }
+
     std::cout << "\n\n";
 
     return;

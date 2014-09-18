@@ -10,7 +10,6 @@
 #include <cassert>
 #include <cstddef>
 
-#define DEBUG
 
 // matrix error class
 class MatrixError : public std::exception {
