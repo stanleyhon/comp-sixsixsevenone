@@ -70,15 +70,15 @@ void SMatrix::allocateArrays (int rows, int columns) {
 }
 
 
-SMatrix::SMatrix(const SMatrix& other) : vals_(other.vals_) { // copy
+SMatrix::SMatrix(const SMatrix& other) { // copy
     if (*this != other) {
-        // do stuff
+        *this = other; // copy operator
     }
 }
 
-SMatrix::SMatrix(SMatrix&& other) : vals_(other.vals_) { // move
+SMatrix::SMatrix(SMatrix&& other) { // move
     if (*this != other) {
-        // do stuff
+        *this = std::move(other);
     }
 }
 
@@ -129,15 +129,60 @@ SMatrix::~SMatrix() {
 }
 
 // operators
-SMatrix& SMatrix::operator=(const SMatrix& s) { // copy
-    SMatrix * s2 = new SMatrix (1);
-    return *s2;
+SMatrix& SMatrix::operator=(const SMatrix& other) { // copy
+    if (this != &other) {
+        // free our own resources
+        delete [] vals_;
+        delete [] cidx_;
+
+        // copy over the other stuff
+        valsLength_ = other.valsLength_;
+        vals_ = new int[other.valsSize_];
+        valsSize_ = other.valsSize_;
+        memcpy (vals_, other.vals_, sizeof (int) * other.valsSize_);
+
+        cidxLength_ = other.cidxLength_;
+        cidx_ = new size_type[other.cidxSize_];
+        cidxSize_ = other.cidxSize_;
+        memcpy (cidx_, other.cidx_, sizeof (size_type) * other.cidxSize_);
+
+        ridx_ = other.ridx_; // copy implemented
+
+        rows_ = other.rows_;
+        columns_ = other.columns_;
+    }
+    return *this;
 }
 
-SMatrix& SMatrix::operator=(SMatrix&& s) { // move
-    return s;
+SMatrix& SMatrix::operator=(SMatrix&& other) { // move
+    // move vals
+    if (this != & other) {
+        // free our own resources
+        delete [] vals_;
+        delete [] cidx_;
+        ridx_ = other.ridx_; // copy is implemented for maps
+
+        // steal other's
+        vals_ = other.vals_;
+        valsLength_ = other.valsLength_;
+        cidx_ = other.cidx_;
+        cidxLength_ = other.cidxLength_;
+        ridx_ = other.ridx_;
+
+        rows_ = other.rows_;
+        columns_ = other.columns_;
+
+        // set the other's size to 0x0
+        other.rows_ = 0;
+        other.columns_ = 0;
+        other.vals_ = nullptr;
+        other.cidx_ = nullptr;
+    }
+
+    return *this;
 }
 
+// TODO: INCOMPLETE
 SMatrix& SMatrix::operator+=(const SMatrix& s) throw(MatrixError) {
     SMatrix * s2 = new SMatrix (1);
     return *s2;
@@ -152,6 +197,7 @@ SMatrix& SMatrix::operator*=(const SMatrix& s) throw(MatrixError) {
     SMatrix * s2 = new SMatrix (1);
     return *s2;
 }
+// TODO: INCOMPLETE
 
 int SMatrix::operator()(size_type s1, size_type s2) const throw(MatrixError) {
     if (s1 >= rows () || s2 >= cols ()) {
@@ -214,8 +260,13 @@ bool SMatrix::setValAdd (size_type row, size_type column, int value) {
         auto firstRow = ridx_.begin();
         if (firstRow == ridx_.end() || firstRow->first > row) { // yes, we are the new lowest row
 #ifdef DEBUG
-            std::cout << "Currently the lowest row is " << firstRow->first << std::endl;
+            if (firstRow != ridx_.end ()) {
+                std::cout << "Currently the lowest row is " << firstRow->first << std::endl;
+            } else {
+                std::cout << "Currently there are no entries in the ridx_ map" << std::endl;
+            }
 #endif
+            assert (row < rows_);
             ridx_[row] = std::make_pair (0, 1);
         } else { // no, there are lower pairs
 #ifdef DEBUG
@@ -313,6 +364,12 @@ bool SMatrix::insertCidx (int index, size_type column) {
 #ifdef DEBUG
         std::cout << "insertCidx is resizing!\n";
 #endif
+        // this fixes a bug where a matrix is initialized as 0 size
+        // so the rule to double the size on limit reached does nothing
+        if (cidxSize_ == 0) { 
+            cidxSize_ = 1;
+        }
+
         size_type * newCidx = new size_type[cidxSize_ * 2]; // double the array's size
 
         // copy the old info into the new one.
@@ -353,6 +410,11 @@ bool SMatrix::insertVals (int index, int value) {
     bool resized = false;
     // check if we need to expand array
     if (valsLength_ == valsSize_) { // need to resize array
+        // this fixes a bug where a matrix is initialized as 0 size
+        // so the rule to double the size on limit reached does nothing
+        if (valsSize_ == 0) {
+            valsSize_ = 1;
+        }
         int * newVals = new int[valsSize_ * 2]; // double the array's size
 
         // copy the old info into the new one.
@@ -559,12 +621,57 @@ bool operator!=(const SMatrix& s1, const SMatrix& s2) {
     return !(s1 == s2);
 }
 
-SMatrix operator+(const SMatrix&, const SMatrix&) throw(MatrixError) {
-    return SMatrix(1);
+SMatrix operator+(const SMatrix& a, const SMatrix& b) throw(MatrixError) {
+    if (a.cols () != b.cols () || a.rows () != b.rows ()) {
+        throw MatrixError ("Matrix size error: 9" + 
+                std::to_string (a.rows ()) + " x " + std::to_string (a.cols ()) + ") + (" +
+                std::to_string (b.rows ()) + " x " + std::to_string (b.cols ()) + ")\n");
+    }
+
+    SMatrix total (a);
+
+    // iterate over all of b's values and add them to A
+    for (auto row = b.ridx_.begin (); row != b.ridx_.end (); ++row) {
+        int idx = row->second.first; // start
+        int endIdx = idx + row->second.second; // count
+        while (idx < endIdx) {
+            int column = b.cidx_[idx];
+            int value = b.vals_[idx];
+            assert (value != 0);
+            // add that to total's corresponding spot
+            int oldValue = total (row->first, column);
+            total.setVal (row->first, column, oldValue + value);
+            idx++;
+        }
+    }
+
+    return total;
 }
 
-SMatrix operator-(const SMatrix&, const SMatrix&) throw(MatrixError) {
-    return SMatrix(1);
+SMatrix operator-(const SMatrix& a, const SMatrix& b) throw(MatrixError) {
+    if (a.cols () != b.cols () || a.rows () != b.rows ()) {
+        throw MatrixError ("Matrix size error: 9" + 
+                std::to_string (a.rows ()) + " x " + std::to_string (a.cols ()) + ") - (" +
+                std::to_string (b.rows ()) + " x " + std::to_string (b.cols ()) + ")\n");
+    }
+    
+    SMatrix total (a);
+    
+    // iterate over all of b's values and add them to A
+    for (auto row = b.ridx_.begin (); row != b.ridx_.end (); ++row) {
+        int idx = row->second.first; // start
+        int endIdx = idx + row->second.second; // count
+        while (idx < endIdx) {
+            int column = b.cidx_[idx];
+            int value = b.vals_[idx];
+            assert (value != 0);
+            // add that to total's corresponding spot
+            int oldValue = total (row->first, column);
+            total.setVal (row->first, column, oldValue - value);
+            idx++;
+        }
+    }
+    return total;
 }
 
 SMatrix operator*(const SMatrix& a, const SMatrix& b) throw(MatrixError) {
@@ -619,8 +726,23 @@ SMatrix operator*(const SMatrix& a, const SMatrix& b) throw(MatrixError) {
     return product;
 }
 
-SMatrix transpose(const SMatrix&) {
-    return SMatrix(1);
+SMatrix transpose(const SMatrix& a) {
+    // the size is gonna be a.col, a.row
+    SMatrix transposed (a.cols (), a.rows ()); // as opposed to a.row, a.col (see flipped!)
+
+    // now iterate over all of the values, but put them in in a.col, a.row order
+    for (auto row = a.ridx_.begin (); row != a.ridx_.end (); ++row) {
+        int index = row->second.first; // get the index where the data starts
+        int count = 0;
+        while (count < row->second.second) {
+            int column = a.cidx_[index + count];
+            int value = a.vals_[index + count];
+            // set the flipped version of it to tranposed
+            transposed.setVal (column, row->first, value);
+            count++;
+        }
+    }
+    return transposed;
 }
 
 std::ostream& operator<<(std::ostream &os, const SMatrix &m) {

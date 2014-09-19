@@ -19,6 +19,24 @@ int main(void) {
   for (mconst.begin (); !mconst.end (); mconst.next ()) {
       std::cout << mconst.value () << " ";
   }
-  std::cout << std::endl;
+  std::cout << "\nfinished test8 iterator tests" <<  std::endl;
+
+  // TEST PLUS
+
+  SMatrix add1 {{2,2,2}, {0,0,1}, {0,1,1}};
+  SMatrix add2 {{2,2,2}, {0,0,1}, {0,1,1}};
+
+  std::cout << "add1" << add1 << std::endl;
+  std::cout << "add2" << add2 << std::endl;
+  std::cout << "ADD\n";
+  std::cout << add1 + add2;
+  std::cout << "SUBTRACT\n";
+  std::cout << add1 - add2;
+  
+  SMatrix transposed = transpose (add1);
+
+  std::cout << "transposed add1" << transposed << std::endl;
+
+
   return 0;
 }
