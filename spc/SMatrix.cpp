@@ -9,10 +9,14 @@ SMatrix::SMatrix(size_type rows, size_type columns) : valsLength_ (0), cidxLengt
     int arraySize = std::min (static_cast<int>(rows * columns / 5), 1000);
     assert (arraySize == rows * columns / 5 || arraySize == 1000);
 
-    vals_ = new int[arraySize];
+    if (arraySize == 0) {
+        vals_ = nullptr;
+        cidx_ = nullptr;
+    } else {
+        cidx_ = new size_type[arraySize];
+        vals_ = new int[arraySize];
+    }
     valsSize_ = arraySize;
-
-    cidx_ = new size_type[arraySize];
     cidxSize_ = arraySize;
 }
 
@@ -124,21 +128,33 @@ SMatrix::SMatrix(const std::initializer_list<std::initializer_list<int>>& il)
 
 // destructor
 SMatrix::~SMatrix() {
-    delete [] vals_;
-    delete [] cidx_;
+    if (vals_ != nullptr) {
+        delete [] vals_;
+        vals_ = nullptr;
+    }
+    if (cidx_ != nullptr) {
+        delete [] cidx_;
+        cidx_ = nullptr;
+    }
 }
 
 // operators
 SMatrix& SMatrix::operator=(const SMatrix& other) { // copy
     if (this != &other) {
         // free our own resources
-        delete [] vals_;
-        delete [] cidx_;
+        if (vals_ != nullptr) {
+            std::cout << "vals_ is " << vals_ << "\n\n";
+            delete [] vals_;
+        }
+        if (cidx_ != nullptr) {
+            delete [] cidx_;
+        }
 
         // copy over the other stuff
         valsLength_ = other.valsLength_;
         vals_ = new int[other.valsSize_];
         valsSize_ = other.valsSize_;
+        
         memcpy (vals_, other.vals_, sizeof (int) * other.valsSize_);
 
         cidxLength_ = other.cidxLength_;
@@ -158,8 +174,14 @@ SMatrix& SMatrix::operator=(SMatrix&& other) { // move
     // move vals
     if (this != & other) {
         // free our own resources
-        delete [] vals_;
-        delete [] cidx_;
+        if (vals_ != nullptr) {
+            delete [] vals_;
+            vals_ = nullptr;
+        }
+        if (cidx_ != nullptr) {
+            delete [] cidx_;
+            cidx_ = nullptr;
+        }
         ridx_ = other.ridx_; // copy is implemented for maps
 
         // steal other's
@@ -182,22 +204,24 @@ SMatrix& SMatrix::operator=(SMatrix&& other) { // move
     return *this;
 }
 
-// TODO: INCOMPLETE
 SMatrix& SMatrix::operator+=(const SMatrix& s) throw(MatrixError) {
-    SMatrix * s2 = new SMatrix (1);
-    return *s2;
+    SMatrix sum = *this + s;
+#ifdef DEBUG
+    std::cout << "temporary sum successful\n";
+#endif
+    *this = std::move(sum);
+    return *this;
 }
 
 SMatrix& SMatrix::operator-=(const SMatrix& s) throw(MatrixError) {
-    SMatrix * s2 = new SMatrix (1);
-    return *s2;
+    *this = (*this - s);
+    return *this;
 }
 
 SMatrix& SMatrix::operator*=(const SMatrix& s) throw(MatrixError) {
-    SMatrix * s2 = new SMatrix (1);
-    return *s2;
+    *this = (*this * s);
+    return *this;
 }
-// TODO: INCOMPLETE
 
 int SMatrix::operator()(size_type s1, size_type s2) const throw(MatrixError) {
     if (s1 >= rows () || s2 >= cols ()) {
@@ -376,6 +400,7 @@ bool SMatrix::insertCidx (int index, size_type column) {
         memcpy (newCidx, cidx_, cidxLength_ * sizeof (size_type));
 
         // free the old one
+        assert (cidx_ != nullptr);
         delete [] cidx_;
 
         // hook the new one up
@@ -421,7 +446,10 @@ bool SMatrix::insertVals (int index, int value) {
         memcpy (newVals, vals_, valsLength_ * sizeof (int));
 
         // free the old one
-        delete [] vals_;
+        if (vals_ != nullptr) {
+            delete [] vals_;
+            vals_ = nullptr;
+        }
 
         // hook the new one up
         vals_ = newVals;

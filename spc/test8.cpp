@@ -37,6 +37,24 @@ int main(void) {
 
   std::cout << "transposed add1" << transposed << std::endl;
 
+  std::cout << "\nfinished test8 add subtract transpose\n" << std::endl;
+
+  std::cout << "add1 += add2: \n" << add1 << "\n" << add2 << "\n\n";
+  add1 += add2;
+  std::cout << "ANSWER: ";
+  std::cout << add1;
+  std::cout << "\n\n\n";
+  
+  std::cout << "add1 -= add2: \n" << add1 << "\n" << add2 << "\n\n";
+  add1 -= add2;
+  std::cout << "ANSWER: ";
+  std::cout << add1;
+  std::cout << "\n\n\n";
+
+  std::cout << "add1 *= add2: \n" << add1 << "\n" << add2 << "\n\n";
+  add1 *= add2;
+  std::cout << "ANSWER: ";
+  std::cout << add1;
 
   return 0;
 }
