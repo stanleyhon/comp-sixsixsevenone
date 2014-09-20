@@ -76,12 +76,12 @@ class SMatrix {
  private:
   // private data members
   int *vals_;
-  int valsLength_; // holds how many things there are
-  int valsSize_; // remembers how much we can store
+  unsigned valsLength_; // holds how many things there are
+  unsigned valsSize_; // remembers how much we can store
 
   size_type *cidx_;
-  int cidxLength_;
-  int cidxSize_;
+  unsigned cidxLength_;
+  unsigned cidxSize_;
 
   // For iterator functionality
   mutable unsigned int iteratorRow_;
@@ -95,7 +95,7 @@ class SMatrix {
  
   // PRIVATE HELPERS 
   // A helper used to allocate vals and cidx members to the required sizes.
-  void allocateArrays (int rows, int columns);
+  void allocateArrays (unsigned rows, unsigned columns);
 
   // Given a row where a new insertion was made, this function
   // iterates over higher rows and shifts their ranges up by 1
@@ -105,15 +105,15 @@ class SMatrix {
   // Given a new non-zero value, row and column, shifts the cidx array up
   // and inserts the column in the correct position
   // Returns whether or not Cidx needed to be extended
-  bool insertCidx (int index, size_type value);
+  bool insertCidx (unsigned index, size_type value);
 
   // Given an index of where the new value should go, shifts the vals array up
   // and inserts the value in the correct position
   // Returns whether or not not Vals needed to be extended
-  bool insertVals (int index, int value);
+  bool insertVals (unsigned index, int value);
 
   // Given an index of an element to be removed (or zeroed), shifts the array down
-  void deleteVals (int index);
+  void deleteVals (unsigned index);
 
   // setVal delegates to this method when adding non-zero elements
   bool setValAdd (size_type row, size_type column, int value);
