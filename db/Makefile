@@ -2,9 +2,9 @@
 CPPFLAGS = -Wall -Werror -O2
 # enable this for debugging
 #CPPFLAGS = -Wall -g
-CXX = g++ -std=c++11
+#CXX = g++ -std=c++11
 # enable this on Mac OS X
-#CXX = g++-4.2
+CXX = g++-4.2 -std=c++11
 
 LDFLAGS =
 READTEST_SRCS = readrecord.cpp fraction.cpp

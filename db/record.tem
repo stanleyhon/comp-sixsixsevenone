@@ -1,14 +1,111 @@
 // Your implementation for the record class goes here.
 
-
+// Default empty constructor
 template <class value>
-ostream& operator<<(ostream& out, const Record<value>& r)
-{
-  return out;
+Record<value>::Record () : selected_ (false) {};
+
+// Standard destructor that does nothing
+template <class value>
+Record<value>::~Record () {};
+
+// Sends the record to the ostream
+template <class value>
+ostream& operator<<(ostream& out, const Record<value>& r) {
+    // Send the brace and the new line
+    out << "{" << std::endl;
+    // iterate over the map
+    for (auto i = r.data_.begin (); i != r.data_.end (); ++i) {
+        // iterate over the vector
+        for (auto val = i->second.begin (); val != i->second.end (); ++val) {
+
+            // Send each attribute -> value pair
+            // Indent with 2 spaces.
+            out << "  " << i->first << " = " << (*val) << std::endl;
+        }
+    }
+    // Send the closing brace and nothing else
+    out << "}";
+    return out;
+}
+
+#define MAX_JUNK 256
+template <class value>
+istream& operator>>(istream& in, Record<value>& r) {
+    // Find the opening brace
+    in.ignore (MAX_JUNK, '{');
+    in.ignore (MAX_JUNK, '\n');
+
+    while (in.peek() != '}' || in.peek() == EOF) {
+        // Read the attribute
+        std::string s;
+        in >> s; 
+#ifdef DEBUG
+        cout << "Read an attribute: " << s << std::endl;
+#endif
+        // Toss it out until the equals
+        in.ignore (MAX_JUNK, '=');
+        // There should be another space after the =, ignore it
+        in.ignore (MAX_JUNK, ' ');
+        // Read the value
+        value v;
+        in >> v;
+#ifdef DEBUG
+        cout << "Read a value: " << v << std::endl;
+#endif
+
+        // add it to the map
+        auto entry = r.data_.find (s);
+        if (entry == r.data_.end ()) { // new entry entirely
+           std::vector <value> newValues; // make a new vector
+           newValues.push_back (v); // put our value in the vector
+           r.data_[s] =  newValues; // push our vector in the map
+        } else {
+            r.data_[s].push_back (v); // put our value in the existing vector
+        }
+
+        // toss out the rest of the line
+        in.ignore (MAX_JUNK, '\n');
+    }
+
+    return in;
 }
 
 template <class value>
-istream& operator>>(istream& in, Record<value>& r)
-{
-  return in; 
+bool Record<value>::matchesQuery(const string& attr, DBQueryOperator op, 
+            const value& want) const {
+
+    auto lookup = data_.find (attr);
+    // see if the attribute exists at all
+    if (lookup == data_.end ()) {
+        return false;
+    } else { // ok the attribute exists, check the values
+        for (auto val = lookup->second.begin (); val != lookup->second.end (); ++val) {
+            auto valueData = *val;
+            if (op == Equal) {
+                if (valueData == want) {
+                    return true;
+                }
+            } else if (op == NotEqual) {
+                if (valueData != want) {
+                    return true;
+                }
+            } else if (op == LessThan) {
+                if (valueData < want) {
+                    return true;
+                }
+            } else if (op == GreaterThan) {
+                if (valueData > want) {
+                    return true;
+                }
+            } else {
+#ifdef DEBUG
+                std::cout << "Invalid DBQueryOperator passed." << std::endl;
+#endif
+                assert (0);
+            }
+        }
+    }
+
+    // No situation caused a true return, therefor false
+    return false;
 }
