@@ -1,1 +1,137 @@
 // Your implementation for the database class goes here.
+
+template <class value>
+Database<value>::Database () : numRecords_ (0), numSelected_ (0) {};
+
+template <class value>
+Database<value>::~Database () {};
+
+template <class value>
+void Database<value>::write (ostream& out, DBScope scope) const {
+    for (auto i = records_.begin (); i != records_.end (); ++i) {
+        if (scope == AllRecords || i->isSelected () == true) {
+            out << *i;
+        }
+    }
+    return;
+}
+
+#define IGNORE_NUM 1000
+template <class value>
+void Database<value>::read (istream& in) {
+    in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
+    while (in.eof == false) {
+        // put back the '{'
+        in.putback ('{');
+        // make a new record
+        Record<value> newRecord;
+        in >> newRecord;
+        records_.push_back (newRecord); // default-copy is sufficient.
+        numRecords_++;
+        in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
+    }
+
+    return;
+}
+
+template <class value>
+void Database<value>::deleteRecords (DBSCope scope) {
+    if (scope == AllRecords) {
+        records_.clear ();
+        numRecords_ = 0;
+    } else if (scope == SelectedRecords) {
+        for (auto i = selected_.begin (); i != selected_.end (); ++i) {
+#ifdef DEBUG
+            assert (* (records_[*i].isSelected () == true);
+#endif
+            records_.erase (records_.begin () + (*i);
+        }
+    }
+ 
+    // Either way, all selected are removed.
+    numSelected_ = 0;
+    selected_.clear ();
+    return;
+}
+
+template <class value>
+void Database<value>::selectAll () {
+    for (auto i = records_.begin (); i != records_.end (); ++i) {
+        if (i->isSelected () == false) {
+            numSelected_++;
+            unsigned int index = i - records_.begin ();
+#ifdef DEBUG
+            // if selected status was false, it really should not be in the
+            // selected list
+            auto find = std::find (selected_.begin (), selected_.end (), index);
+            assert (find == selected_.end ());
+#endif
+            selected_.push_back (index);
+        }
+    }
+#ifdef DEBUG
+    assert (isSelected_ == records_.size ());
+#endif
+    return;
+}
+
+template <class value>
+void Database<value>::deselectAll () {
+    numSelected_ = 0;
+    for (auto i = selected_.begin (); i != selected_.end (); ++i) {
+#ifdef DEBUG
+        assert (records_[*i].isSelected () == true);
+#endif
+        records_[*i].setSelected (false);
+    }
+
+    selected_.clear (); // clear the selected list
+    return;
+}
+
+template <class value>
+void Database<value>::select (DBSelectOperation selOp, const string& attr,
+                DBQueryOperator op, const Value& val) {
+    if (selOp == All) {
+        // Just call select all
+        selectAll ();
+    } else if (selOp == Clear) {
+        // Just call deselect all
+        deselectAll ();
+    } else if (selOp == Add) {
+        for (auto rec = records_.begin (); rec != records_.end (); ++rec) {
+            if (rec->isSelected () == false) {
+                if (rec->matchesQuery (attr, op, val) == true) {
+                    // select this guy
+                    numSelected_++;
+                    selected_.push_back (records_.begin () - rec);
+                    rec->setSelected (true);
+                }
+            }
+        }
+    } else if (selOp == Remove) {
+        for (auto idx = selected_.begin (); idx != selected_.end (); ++idx) {
+            if (records_[idx].matchesQuery (attr, op, val) == true) {
+                // remove this one
+                records_[idx].setSelected (false);
+                // erase this way keeps iterators valid
+                idx = selected_.erase (idx);
+                numSelected_--;
+            }
+        }
+    } else if (selOp == Refine) {
+        for (auto idx = selected_.begin (); idx != selected_.end (); ++idx) {
+            if (records_[idx].matchesQuery (attr, op, val) == false) {
+                // remove it because only ones that stay true stay.
+                records_[idx].setSelected (false);
+                // erase this way keeps iterators valid
+                idx = selected_.erase (idx); 
+                numSelected_--;
+            }
+        }
+    } else {
+        assert (0); // invalid selOp
+    }
+    return;
+}
+

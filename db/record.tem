@@ -76,8 +76,14 @@ bool Record<value>::matchesQuery(const string& attr, DBQueryOperator op,
 
     auto lookup = data_.find (attr);
     // see if the attribute exists at all
-    if (lookup == data_.end ()) {
+    if (lookup == data_.end () && attr.compare("*") != 0) {
         return false;
+    } else if (attr.compare("*") == 0) {
+        for (auto val = lookup->second.begin (); val != lookup->second.end (); ++val) {
+            if (*val == want) {
+                return true;
+            }
+        }
     } else { // ok the attribute exists, check the values
         for (auto val = lookup->second.begin (); val != lookup->second.end (); ++val) {
             auto valueData = *val;
