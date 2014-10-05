@@ -94,10 +94,14 @@ bool Record<value>::matchesQuery(const string& attr, DBQueryOperator op,
     // see if the attribute exists at all
     if (lookup == data_.end () && attr.compare("*") != 0) {
         return false;
-    } else if (attr.compare("*") == 0) {
-        for (auto val = lookup->second.begin (); val != lookup->second.end (); ++val) {
-            if (*val == want) {
-                return true;
+    } else if (attr.compare ("*") == 0) {
+        for (auto mapEntry = data_.begin (); mapEntry != data_.end (); ++mapEntry) {
+            auto valVector = mapEntry->second;
+            // look through all of the values
+            for (auto val = valVector.begin (); val != valVector.end (); ++val) {
+                if (want == *val) {
+                    return true;
+                }
             }
         }
     } else { // ok the attribute exists, check the values

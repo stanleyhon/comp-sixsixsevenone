@@ -48,7 +48,7 @@ class Record {
   friend istream& operator>><value>(istream& in, Record<value>& r);
  
   public:
-    explicit Record (); // empty constructor
+    Record (); // empty constructor
     ~Record (); // Destructor
 
     bool matchesQuery(const string& attr, DBQueryOperator op, 
