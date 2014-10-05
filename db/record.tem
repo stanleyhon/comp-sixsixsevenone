@@ -13,14 +13,17 @@ template <class value>
 ostream& operator<<(ostream& out, const Record<value>& r) {
     // Send the brace and the new line
     out << "{" << std::endl;
-    // iterate over the map
-    for (auto i = r.data_.begin (); i != r.data_.end (); ++i) {
-        // iterate over the vector
-        for (auto val = i->second.begin (); val != i->second.end (); ++val) {
+    // iterate over the printOrder
+    for (auto i = r.printOrder_.begin (); i != r.printOrder_.end (); ++i) {
+        // lookup the map, with each string in printOrder
+        // and iterate over it's vector
+        std::string s = *i;
+        auto mapResult = r.data_.find(s);
+        for (auto val = mapResult->second.begin (); val != mapResult->second.end (); ++val) {
 
             // Send each attribute -> value pair
             // Indent with 2 spaces.
-            out << "  " << i->first << " = " << (*val) << std::endl;
+            out << "  " << s << " = " << (*val) << std::endl;
         }
     }
     // Send the closing brace and nothing else
@@ -38,8 +41,20 @@ istream& operator>>(istream& in, Record<value>& r) {
     while (in.peek() != '}' || in.peek() == EOF) {
         // Read the attribute
         std::string s;
-        in >> s; 
-#ifdef DEBUG
+        // Toss out the first two spaces
+        in.ignore (MAX_JUNK, ' '); 
+        in.ignore (MAX_JUNK, ' ');
+        while (in.peek () != '=') {
+            if (in.peek () == ' ') {
+                in.get (); // "read" the space and see if it's an equal sign next
+                if (in.peek () != '=') {
+                    s.push_back (' ');
+                }
+            } else {
+                s.push_back (in.get ());
+            }
+        }
+#ifdef DEBUG_ON
         cout << "Read an attribute: " << s << std::endl;
 #endif
         // Toss it out until the equals
@@ -49,7 +64,7 @@ istream& operator>>(istream& in, Record<value>& r) {
         // Read the value
         value v;
         in >> v;
-#ifdef DEBUG
+#ifdef DEBUG_ON
         cout << "Read a value: " << v << std::endl;
 #endif
 
@@ -59,6 +74,7 @@ istream& operator>>(istream& in, Record<value>& r) {
            std::vector <value> newValues; // make a new vector
            newValues.push_back (v); // put our value in the vector
            r.data_[s] =  newValues; // push our vector in the map
+           r.printOrder_.push_back (s); // push the string on the printOrder list to keep track of print order 
         } else {
             r.data_[s].push_back (v); // put our value in the existing vector
         }

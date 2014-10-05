@@ -3,6 +3,9 @@
 
 #include "record.h"
 #include <list>
+#ifndef DEBUG_ON
+#define DEBUG_ON
+#endif 
 // Your database class definition goes here
 template <class value>
 class Database {

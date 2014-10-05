@@ -1,8 +1,9 @@
 // Your implementation for the database class goes here.
 
-//template <class value>
-//Database<value>::Database () : numRecords_ (0), numSelected_ (0) {};
+template <class value>
+Database<value>::Database () : numRecords_ (0), numSelected_ (0) {};
 
+// There is no explicitly allocated things to be freed here.
 template <class value>
 Database<value>::~Database () {};
 
@@ -10,7 +11,8 @@ template <class value>
 void Database<value>::write (ostream& out, DBScope scope) const {
     for (auto i = records_.begin (); i != records_.end (); ++i) {
         if (scope == AllRecords || i->isSelected () == true) {
-            // out << *i;
+            out << *i;
+            out << "\n";
         }
     }
     return;
@@ -19,13 +21,17 @@ void Database<value>::write (ostream& out, DBScope scope) const {
 #define IGNORE_NUM 1000
 template <class value>
 void Database<value>::read (istream& in) {
+#ifdef DEBUG_ON
+    std::cout << "Attempting to read in a stream\n";
+#endif
     in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
     while (in.eof () == false) {
         // put back the '{'
         in.putback ('{');
         // make a new record
         Record<value> newRecord;
-        // in >> newRecord;
+        Record<value> & ref = newRecord;
+        in >> ref;
         records_.push_back (newRecord); // default-copy is sufficient.
         numRecords_++;
         in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
@@ -44,7 +50,7 @@ void Database<value>::deleteRecords (DBScope scope) {
 #ifdef DEBUG
             assert ((records_[*i].isSelected () == true);
 #endif
-            records_.erase (records_.begin () + (*i));
+                    records_.erase (records_.begin () + (*i));
         }
     }
  
@@ -58,6 +64,7 @@ template <class value>
 void Database<value>::selectAll () {
     for (auto i = records_.begin (); i != records_.end (); ++i) {
         if (i->isSelected () == false) {
+            i->setSelected (true);
             numSelected_++;
             unsigned int index = i - records_.begin ();
 #ifdef DEBUG

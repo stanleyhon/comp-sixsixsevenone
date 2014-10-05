@@ -22,6 +22,10 @@ enum DBSelectOperation { All, Clear, Add, Remove, Refine };
 enum DBScope { AllRecords, SelectedRecords};
 enum DBQueryOperator { Equal, NotEqual, LessThan, GreaterThan };
 
+template <typename value> class Record;
+template <typename value> ostream& operator<<(ostream& in, const Record<value>& r);
+template <typename value> istream& operator>>(istream& in, Record<value>& r);
+
 template <class value>
 class Record {
 
@@ -33,13 +37,18 @@ class Record {
   // and all its values
   
   std::map <std::string, std::vector <value>> data_;
+
+  // turns out we need to keep insertion order, so just 
+  // keep a vector of strings to indicate what order to print in.
+  std::vector <std::string> printOrder_;
+
   bool selected_; // keep track of our selected status
 
-//  friend ostream& operator<<<value>(ostream& out, const Record<value>& r);
-//  friend istream& operator>><value>(istream& in, Record<value>& r);
+  friend ostream& operator<<<value>(ostream& out, const Record<value>& r);
+  friend istream& operator>><value>(istream& in, Record<value>& r);
  
   public:
-    Record (); // empty constructor
+    explicit Record (); // empty constructor
     ~Record (); // Destructor
 
     bool matchesQuery(const string& attr, DBQueryOperator op, 
@@ -50,11 +59,6 @@ class Record {
     void setSelected (bool val) { selected_ = val; };
 
 };
-
-template <class value>
-ostream& operator<<(ostream& out, const Record<value>& r);
-template <class value>
-ostream& operator>>(istream& in, Record<value>& r);
 
 #include "record.tem"
 
