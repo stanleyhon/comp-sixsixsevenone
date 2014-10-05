@@ -35,8 +35,8 @@ class Record {
   std::map <std::string, std::vector <value>> data_;
   bool selected_; // keep track of our selected status
 
-  friend ostream& operator<<<value>(ostream& out, const Record<value>& r);
-  friend istream& operator>><value>(istream& in, Record<value>& r);
+//  friend ostream& operator<<<value>(ostream& out, const Record<value>& r);
+//  friend istream& operator>><value>(istream& in, Record<value>& r);
  
   public:
     Record (); // empty constructor

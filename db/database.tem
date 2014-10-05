@@ -1,7 +1,7 @@
 // Your implementation for the database class goes here.
 
-template <class value>
-Database<value>::Database () : numRecords_ (0), numSelected_ (0) {};
+//template <class value>
+//Database<value>::Database () : numRecords_ (0), numSelected_ (0) {};
 
 template <class value>
 Database<value>::~Database () {};
@@ -10,7 +10,7 @@ template <class value>
 void Database<value>::write (ostream& out, DBScope scope) const {
     for (auto i = records_.begin (); i != records_.end (); ++i) {
         if (scope == AllRecords || i->isSelected () == true) {
-            out << *i;
+            // out << *i;
         }
     }
     return;
@@ -20,12 +20,12 @@ void Database<value>::write (ostream& out, DBScope scope) const {
 template <class value>
 void Database<value>::read (istream& in) {
     in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
-    while (in.eof == false) {
+    while (in.eof () == false) {
         // put back the '{'
         in.putback ('{');
         // make a new record
         Record<value> newRecord;
-        in >> newRecord;
+        // in >> newRecord;
         records_.push_back (newRecord); // default-copy is sufficient.
         numRecords_++;
         in.ignore (IGNORE_NUM, '{'); // Look for an opening brace
@@ -35,16 +35,16 @@ void Database<value>::read (istream& in) {
 }
 
 template <class value>
-void Database<value>::deleteRecords (DBSCope scope) {
+void Database<value>::deleteRecords (DBScope scope) {
     if (scope == AllRecords) {
         records_.clear ();
         numRecords_ = 0;
     } else if (scope == SelectedRecords) {
         for (auto i = selected_.begin (); i != selected_.end (); ++i) {
 #ifdef DEBUG
-            assert (* (records_[*i].isSelected () == true);
+            assert ((records_[*i].isSelected () == true);
 #endif
-            records_.erase (records_.begin () + (*i);
+            records_.erase (records_.begin () + (*i));
         }
     }
  
@@ -91,7 +91,7 @@ void Database<value>::deselectAll () {
 
 template <class value>
 void Database<value>::select (DBSelectOperation selOp, const string& attr,
-                DBQueryOperator op, const Value& val) {
+                DBQueryOperator op, const value& val) {
     if (selOp == All) {
         // Just call select all
         selectAll ();
@@ -111,9 +111,9 @@ void Database<value>::select (DBSelectOperation selOp, const string& attr,
         }
     } else if (selOp == Remove) {
         for (auto idx = selected_.begin (); idx != selected_.end (); ++idx) {
-            if (records_[idx].matchesQuery (attr, op, val) == true) {
+            if (records_[*idx].matchesQuery (attr, op, val) == true) {
                 // remove this one
-                records_[idx].setSelected (false);
+                records_[*idx].setSelected (false);
                 // erase this way keeps iterators valid
                 idx = selected_.erase (idx);
                 numSelected_--;
@@ -121,9 +121,9 @@ void Database<value>::select (DBSelectOperation selOp, const string& attr,
         }
     } else if (selOp == Refine) {
         for (auto idx = selected_.begin (); idx != selected_.end (); ++idx) {
-            if (records_[idx].matchesQuery (attr, op, val) == false) {
+            if (records_[*idx].matchesQuery (attr, op, val) == false) {
                 // remove it because only ones that stay true stay.
-                records_[idx].setSelected (false);
+                records_[*idx].setSelected (false);
                 // erase this way keeps iterators valid
                 idx = selected_.erase (idx); 
                 numSelected_--;

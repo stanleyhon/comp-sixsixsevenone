@@ -2,7 +2,7 @@
 #define DATABASE_H
 
 #include "record.h"
-
+#include <list>
 // Your database class definition goes here
 template <class value>
 class Database {
@@ -13,7 +13,7 @@ class Database {
     // and run selected operations on those.
 
     // vectors offer fast random access where as list doesn't.
-    std::vector<Record<value>> records_;
+    std::vector <Record <value>> records_;
     int numRecords_;
     int numSelected_;
 
@@ -38,7 +38,7 @@ class Database {
         void deselectAll ();
 
         void select (DBSelectOperation selOp, const string& attr, 
-                DBQueryOperator op, const Value& val);
+                DBQueryOperator op, const value& val);
 };
 
 #include "database.tem"
