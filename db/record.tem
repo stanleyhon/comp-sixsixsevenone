@@ -86,6 +86,61 @@ istream& operator>>(istream& in, Record<value>& r) {
     return in;
 }
 
+// yes i know i shouldn't have copy pasted this...
+// ideally another templated helper would be specialised to deal with
+// strings so only the in >> val code needs to be replaced with the helper call
+// and this function not duplicated.
+template <>
+istream& operator>>(istream& in, Record<std::string>& r) {
+    // Find the opening brace
+    in.ignore (MAX_JUNK, '{');
+    in.ignore (MAX_JUNK, '\n');
+
+    while (in.peek() != '}' || in.peek() == EOF) {
+        // Read the attribute
+        std::string s;
+        // Toss out the first two spaces
+        in.ignore (MAX_JUNK, ' '); 
+        in.ignore (MAX_JUNK, ' ');
+        while (in.peek () != '=') {
+            if (in.peek () == ' ') {
+                in.get (); // "read" the space and see if it's an equal sign next
+                if (in.peek () != '=') {
+                    s.push_back (' ');
+                }
+            } else {
+                s.push_back (in.get ());
+            }
+        }
+#ifdef DEBUG_ON
+        cout << "Read an attribute: " << s << std::endl;
+#endif
+        // Toss it out until the equals
+        in.ignore (MAX_JUNK, '=');
+        // There should be another space after the =, ignore it
+        in.ignore (MAX_JUNK, ' ');
+        // Read the value
+        std::string v;
+        getline (in, v, '\n');
+#ifdef DEBUG_ON
+        cout << "Read a value: " << v << std::endl;
+#endif
+
+        // add it to the map
+        auto entry = r.data_.find (s);
+        if (entry == r.data_.end ()) { // new entry entirely
+           std::vector <std::string> newValues; // make a new vector
+           newValues.push_back (v); // put our value in the vector
+           r.data_[s] =  newValues; // push our vector in the map
+           r.printOrder_.push_back (s); // push the string on the printOrder list to keep track of print order 
+        } else {
+            r.data_[s].push_back (v); // put our value in the existing vector
+        }
+    }
+
+    return in;
+}
+
 template <class value>
 bool Record<value>::matchesQuery(const string& attr, DBQueryOperator op, 
             const value& want) const {
