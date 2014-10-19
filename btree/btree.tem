@@ -1,7 +1,7 @@
 // constructor
 template <typename T>
 btree<T>::btree(size_t maxNodeElems) {
-   root = new node<T>(maxNodeElems);    
+   root = new node<T>(maxNodeElems); 
 }
 
 // Copy constructor
@@ -65,19 +65,105 @@ btree<T>::~btree() {};
 
 // node constructor
 template <typename T>
-node<T>::node (const unsigned int node_size) : node_size_ (node_size)  {
-    children_ = new node<T>* [node_size + 1];
+node<T>::node (const unsigned int node_size) : 
+    node_size_(node_size), parent_(nullptr), max_children_(node_size + 1),
+    max_children_index_(node_size) {
+    // There is one more children than there is data items
+    unsigned int number = node_size + 1;
+    children_ = new node<T>* [number];
+    unsigned int idx = 0;
+    while (idx < number) {
+        children_[idx] = nullptr;
+        idx++;
+    }
 }
 
 // node destructor
 template <typename T>
 node<T>::~node () {
-    // do things;
+    // data_ does not need explicit deletion.
+    // Call destructors of each child.
+    unsigned int idx = 0;
+    // There is one more child than node_size_
+    while (idx <= node_size_) {
+        if (children_[idx] != nullptr) {
+            delete children_[idx];
+        }
+        idx++;
+    }
+}
+
+template <typename T>
+void node<T>::shift_children (unsigned int idx) {
+    // shift everything including idx up.
+    // We should never shift when we're full
+    assert (children_[max_children_index_] == nullptr);
+    assert (idx != max_children_index_);
+
+    unsigned int target = max_children_index_;
+    while (target > idx) {
+        children_[target] = children_[target - 1];
+        idx--;
+    }
+
+    children_[target] = nullptr;
+
+    return;
 }
 
 // insert an element into the btree
 template <typename T>
 bool node<T>::insert (const T& elem) {
+    // Lets see if it has a place in this node
+    if (data_.size() < node_size_) {
+        unsigned int idx = 0;
+        auto i = data_.begin();
+        for (; i != data_.end(); ++i) {
+            if (*i == elem) { // It's already there
+                return false;
+            } else if (*i > elem) { // it goes on the left.
+                break;
+            }
+            idx++;
+        }
+        // If it hasn't reached data.end(), it's on the left of some element.
+        // iterator.insert behaves exactly like this
+        if (i != data_.end()) {
+            data_.insert (i, elem);
+            // idx contains the index of the now, out of place
+            // child, that we need to move up.
+            shift_children (idx);
+
+        // The iterator reached the end, indicating the correct position
+        // is right at the end of the list, since this node is not full
+        } else if (i == data_.end()) {
+            // don't need to shift children, since the last was guaranteed to be null already.
+            data_.push_back (elem);
+        }
+        
+        return true; 
+    // no room here, delegate to a child
+    } else { 
+        unsigned int childIndex = 0;
+        for (auto dataItem = data_.begin(); dataItem != data_.end(); ++dataItem) {
+            if (*dataItem > elem) { // it goes on the left of this one
+                if (children_[childIndex] == nullptr) {
+                    children_[childIndex] = new node<T> (node_size_);
+                    children_[childIndex]->parent_ = this;
+                }
+                return children_[childIndex]->insert (elem);
+            }
+        }
+        // If it reached here, It must be on the right of the last element.
+        if (children_[max_children_index_] == nullptr) {
+            children_[max_children_index_] = new node<T> (node_size_);
+            children_[max_children_index_]->parent_ = this;
+        }
+        return children_[max_children_index_]->insert (elem);
+    }
+
+    // Should never reach this point.
+    assert (false);
     return false;
 }
 

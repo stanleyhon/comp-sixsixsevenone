@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <utility>
 #include <list>
+#include <cassert>
 
 // we better include the iterator
 #include "btree_iterator.h"
@@ -27,10 +28,13 @@ class node {
 
         bool insert (const T& elem);
         bool find (const T& elem);
-
-        const unsigned int node_size_;
-
     private:
+        const unsigned int node_size_;
+        node<T>* parent_;
+        const unsigned int max_children_;
+        const unsigned int max_children_index_;
+        
+        void shift_children (unsigned int idx);
         std::list<T> data_;
         node<T>** children_;
 };
