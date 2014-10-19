@@ -8,9 +8,23 @@
  * Failure to do so will result in a total mark of 0 for this deliverable.
  **/
 
-// iterator related interface stuff here; would be nice if you called your
-// iterator class btree_iterator (and possibly const_btree_iterator)
+template <typename T>
+class btree_iterator {
+    public:
+        btree_iterator ();
+    private:
+        // things
+        int x;
+};
 
+template <typename T>
+class const_btree_iterator {
+    public:
+        const_btree_iterator ();
+    private:
+        // things
+        int x;
+};
 #include "btree_iterator.tem"
 
 #endif

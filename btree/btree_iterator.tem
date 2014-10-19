@@ -1,2 +1,9 @@
-
 // your btree iterator implementation goes here
+
+// constructor
+template <typename T>
+btree_iterator<T>::btree_iterator () {};
+
+template <typename T>
+const_btree_iterator<T>::const_btree_iterator () {};
+

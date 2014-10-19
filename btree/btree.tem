@@ -1,2 +1,89 @@
+// constructor
+template <typename T>
+btree<T>::btree(size_t maxNodeElems) {
+   root = new node<T>(maxNodeElems);    
+}
 
-// your btree implementation goes here
+// Copy constructor
+template <typename T>
+btree<T>::btree(const btree<T>& original) {
+    // do many things
+}
+
+// move constructor
+template <typename T>
+btree<T>::btree(btree<T>&& original) {
+    // do many things
+}
+
+// copy assignment
+template <typename T>
+btree<T>& btree<T>::operator=(const btree<T>& rhs) {
+    // do many things
+}
+
+// move assignment
+template <typename T>
+btree<T>& btree<T>::operator=(btree<T>&& rhs) {
+    // do many things
+}
+
+// output tree to stream with space delimiter
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const btree<T>& tree) {
+
+    os << "HI!";
+    return os;
+}
+
+// insert into the tree
+template <typename T>
+std::pair<btree_iterator<T>, bool> btree<T>::insert(const T& elem) {
+
+    return make_pair (btree_iterator<T>(), true);
+}
+
+// iterator
+template <typename T>
+btree_iterator<T> btree<T>::find(const T& elem) {
+    return btree_iterator<T>();
+}
+
+// const_iterator
+template <typename T>
+const_btree_iterator<T> btree<T>::find(const T& elem) const {
+    return const_btree_iterator<T>();
+}
+
+// destructor
+template <typename T>
+btree<T>::~btree() {};
+
+/***********************/
+/* Node Implementation */
+/***********************/
+
+// node constructor
+template <typename T>
+node<T>::node (const unsigned int node_size) : node_size_ (node_size)  {
+    children_ = new node<T>* [node_size + 1];
+}
+
+// node destructor
+template <typename T>
+node<T>::~node () {
+    // do things;
+}
+
+// insert an element into the btree
+template <typename T>
+bool node<T>::insert (const T& elem) {
+    return false;
+}
+
+// find an element in the btree
+template <typename T>
+bool node<T>::find (const T& elem) {
+    return false;
+}
+
