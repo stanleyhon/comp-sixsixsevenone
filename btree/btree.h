@@ -13,8 +13,10 @@
 #include <iostream>
 #include <cstddef>
 #include <utility>
-#include <list>
+#include <vector>
 #include <cassert>
+
+#define _DEBUG_
 
 // we better include the iterator
 #include "btree_iterator.h"
@@ -35,7 +37,7 @@ class node {
         const unsigned int max_children_index_;
         
         void shift_children (unsigned int idx);
-        std::list<T> data_;
+        std::vector<T> data_;
         node<T>** children_;
 };
 

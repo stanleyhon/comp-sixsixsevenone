@@ -68,6 +68,9 @@ template <typename T>
 node<T>::node (const unsigned int node_size) : 
     node_size_(node_size), parent_(nullptr), max_children_(node_size + 1),
     max_children_index_(node_size) {
+#ifdef _DEBUG_
+    std::cout << "Node being constructed.\n";
+#endif
     // There is one more children than there is data items
     unsigned int number = node_size + 1;
     children_ = new node<T>* [number];
@@ -93,24 +96,6 @@ node<T>::~node () {
     }
 }
 
-template <typename T>
-void node<T>::shift_children (unsigned int idx) {
-    // shift everything including idx up.
-    // We should never shift when we're full
-    assert (children_[max_children_index_] == nullptr);
-    assert (idx != max_children_index_);
-
-    unsigned int target = max_children_index_;
-    while (target > idx) {
-        children_[target] = children_[target - 1];
-        idx--;
-    }
-
-    children_[target] = nullptr;
-
-    return;
-}
-
 // insert an element into the btree
 template <typename T>
 bool node<T>::insert (const T& elem) {
@@ -130,36 +115,43 @@ bool node<T>::insert (const T& elem) {
         // iterator.insert behaves exactly like this
         if (i != data_.end()) {
             data_.insert (i, elem);
-            // idx contains the index of the now, out of place
-            // child, that we need to move up.
-            shift_children (idx);
-
         // The iterator reached the end, indicating the correct position
         // is right at the end of the list, since this node is not full
         } else if (i == data_.end()) {
-            // don't need to shift children, since the last was guaranteed to be null already.
             data_.push_back (elem);
-        }
-        
+        } 
         return true; 
     // no room here, delegate to a child
-    } else { 
+    } else {
+#ifdef _DEBUG_
+        std::cout << "Insertion needs to delegate.\n";
+#endif
         unsigned int childIndex = 0;
         for (auto dataItem = data_.begin(); dataItem != data_.end(); ++dataItem) {
             if (*dataItem > elem) { // it goes on the left of this one
+#ifdef _DEBUG_
+                std::cout << "Insertion is delegating to the child left of " << *dataItem << "\n";
+#endif
                 if (children_[childIndex] == nullptr) {
+#ifdef _DEBUG_
+                std::cout << "Insertion has found it's null, spawning a child" << "\n";
+#endif
                     children_[childIndex] = new node<T> (node_size_);
                     children_[childIndex]->parent_ = this;
                 }
                 return children_[childIndex]->insert (elem);
             }
+            childIndex++;
         }
         // If it reached here, It must be on the right of the last element.
-        if (children_[max_children_index_] == nullptr) {
-            children_[max_children_index_] = new node<T> (node_size_);
-            children_[max_children_index_]->parent_ = this;
+#ifdef _DEBUG_
+        std::cout << "Insertion has not found a suitable left child, delegating to child in slot " << childIndex << "\n";
+#endif
+        if (children_[childIndex] == nullptr) {
+            children_[childIndex] = new node<T> (node_size_);
+            children_[childIndex]->parent_ = this;
         }
-        return children_[max_children_index_]->insert (elem);
+        return children_[childIndex]->insert (elem);
     }
 
     // Should never reach this point.
@@ -170,6 +162,36 @@ bool node<T>::insert (const T& elem) {
 // find an element in the btree
 template <typename T>
 bool node<T>::find (const T& elem) {
-    return false;
+    // See if the element is here
+    unsigned int index = 0;
+    auto i = data_.begin();
+    for (;i != data_.end(); ++i) {
+        if (*i == elem) {
+            return true;
+        }
+        if (*i > elem) { // Left child
+            if (children_[index] != nullptr) {
+#ifdef _DEBUG_
+                std::cout << "Find delegating to a child on the left of " << *i << "\n";
+#endif
+                return children_[index]->find (elem);
+            } else {
+#ifdef _DEBUG_
+                std::cout << "Find wanted to delegate to a child on he left of " << *i << " but it was null\n";;
+#endif
+                return false;
+            }
+        }
+        index++;
+    }
+
+    // If we get to this point, it wasn't on the left of any element
+    // There's only one spot left, the rightmost slot.
+    // It just so happens that index is also this index, since it is post incremented.
+    if (children_[index] == nullptr) {
+        return false;
+    } else {
+        return children_[index]->find (elem);
+    }
 }
 
