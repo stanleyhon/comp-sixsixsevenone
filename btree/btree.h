@@ -18,21 +18,21 @@
 
 #define _DEBUG_
 
-// we better include the iterator
-#include "btree_iterator.h"
 
 // My class for handling btree nodes.
 template <typename T>
 class node {
     public:
-        node (const unsigned int node_size);
+        node (const unsigned int node_size, node<T> * parent, unsigned int child_index);
         ~node ();
 
-        bool insert (const T& elem);
-        bool find (const T& elem);
+        std::pair<node<T> *, unsigned int> insert (const T& elem);
+        std::pair<node<T> *, unsigned int> find (const T& elem);
     private:
         const unsigned int node_size_;
-        node<T>* parent_;
+        const node<T>* parent_;
+        // stores the value i, where we are the i-th child of the parent.
+        const unsigned int child_index_; 
         const unsigned int max_children_;
         const unsigned int max_children_index_;
         
@@ -40,6 +40,9 @@ class node {
         std::vector<T> data_;
         node<T>** children_;
 };
+
+// we better include the iterator
+#include "btree_iterator.h"
 
 // we do this to avoid compiler errors about non-template friends
 // what do we do, remember? :)
@@ -125,13 +128,8 @@ class btree {
          */
         friend std::ostream& operator<< <T> (std::ostream& os, const btree<T>& tree);
 
-        iterator begin () {
-            return iterator();
-        }
-
-        iterator end () {
-            return iterator();
-        }
+        iterator begin (); 
+        iterator end ();
         /**
          * The following can go here
          * -- begin() 

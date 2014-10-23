@@ -2,7 +2,23 @@
 
 // constructor
 template <typename T>
-btree_iterator<T>::btree_iterator () {};
+btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index) :
+    data_index_(data_index) {
+
+    target_ = target;
+}
+
+// output tree to stream with space delimiter
+template <typename T>
+bool operator==(btree_iterator<T>& left, btree_iterator<T>& right) {
+//    if (left.target_ == right.target_ && left.data_index_ == right.data_index_) {
+//        return true;
+//    } else {
+//        return false;
+//    }
+    return true;
+}
+
 
 template <typename T>
 const_btree_iterator<T>::const_btree_iterator () {};

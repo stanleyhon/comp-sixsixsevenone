@@ -8,13 +8,17 @@
  * Failure to do so will result in a total mark of 0 for this deliverable.
  **/
 
+template <typename T> class btree_iterator;
+template <typename T> bool operator== (btree_iterator<T>& left, btree_iterator<T>& right);
+
 template <typename T>
 class btree_iterator {
     public:
-        btree_iterator ();
+        btree_iterator (node<T> * target, unsigned int data_index);
+        friend bool operator==<T> (btree_iterator<T>& left, btree_iterator<T>& right);
     private:
-        // things
-        int x;
+        node<T> * target_; // which node does this iterator point at?
+        unsigned int data_index_; // which element in this node does this iterator point at?
 };
 
 template <typename T>

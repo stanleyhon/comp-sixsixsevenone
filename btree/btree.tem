@@ -1,7 +1,7 @@
 // constructor
 template <typename T>
 btree<T>::btree(size_t maxNodeElems) {
-   root = new node<T>(maxNodeElems); 
+   root = new node<T>(maxNodeElems, nullptr, 0); 
 }
 
 // Copy constructor
@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const btree<T>& tree) {
 template <typename T>
 std::pair<btree_iterator<T>, bool> btree<T>::insert(const T& elem) {
 
-    return make_pair (btree_iterator<T>(), true);
+    return std::make_pair (btree_iterator<T>(), true);
 }
 
 // iterator
@@ -60,14 +60,30 @@ template <typename T>
 btree<T>::~btree() {};
 
 /***********************/
+/*  Iterator Business  */
+/***********************/
+
+template <typename T>
+btree_iterator<T> btree<T>::begin () {
+    btree_iterator<T> i (root, 0);
+    return i;
+}
+
+template <typename T>
+btree_iterator<T> btree<T>:: end () {
+    btree_iterator<T> i (nullptr, 0);
+    return i;
+}
+
+/***********************/
 /* Node Implementation */
 /***********************/
 
 // node constructor
 template <typename T>
-node<T>::node (const unsigned int node_size) : 
-    node_size_(node_size), parent_(nullptr), max_children_(node_size + 1),
-    max_children_index_(node_size) {
+node<T>::node (const unsigned int node_size, node<T> * parent, const unsigned int child_index) : 
+    node_size_(node_size), parent_(parent), child_index_(child_index), 
+    max_children_(node_size + 1), max_children_index_(node_size) {
 #ifdef _DEBUG_
     std::cout << "Node being constructed.\n";
 #endif
@@ -98,14 +114,14 @@ node<T>::~node () {
 
 // insert an element into the btree
 template <typename T>
-bool node<T>::insert (const T& elem) {
+std::pair<node<T> *, unsigned int> node<T>::insert (const T& elem) {
     // Lets see if it has a place in this node
     if (data_.size() < node_size_) {
         unsigned int idx = 0;
         auto i = data_.begin();
         for (; i != data_.end(); ++i) {
             if (*i == elem) { // It's already there
-                return false;
+                return std::make_pair(static_cast<node<T>*> (nullptr), 0);
             } else if (*i > elem) { // it goes on the left.
                 break;
             }
@@ -120,7 +136,7 @@ bool node<T>::insert (const T& elem) {
         } else if (i == data_.end()) {
             data_.push_back (elem);
         } 
-        return true; 
+        return std::make_pair (this, idx);
     // no room here, delegate to a child
     } else {
 #ifdef _DEBUG_
@@ -136,7 +152,7 @@ bool node<T>::insert (const T& elem) {
 #ifdef _DEBUG_
                 std::cout << "Insertion has found it's null, spawning a child" << "\n";
 #endif
-                    children_[childIndex] = new node<T> (node_size_);
+                    children_[childIndex] = new node<T> (node_size_, this, childIndex);
                     children_[childIndex]->parent_ = this;
                 }
                 return children_[childIndex]->insert (elem);
@@ -148,26 +164,25 @@ bool node<T>::insert (const T& elem) {
         std::cout << "Insertion has not found a suitable left child, delegating to child in slot " << childIndex << "\n";
 #endif
         if (children_[childIndex] == nullptr) {
-            children_[childIndex] = new node<T> (node_size_);
-            children_[childIndex]->parent_ = this;
+            children_[childIndex] = new node<T> (node_size_, this, childIndex);
         }
         return children_[childIndex]->insert (elem);
     }
 
     // Should never reach this point.
     assert (false);
-    return false;
+    return std::make_pair(static_cast<node<T>*> (nullptr), 0);
 }
 
 // find an element in the btree
 template <typename T>
-bool node<T>::find (const T& elem) {
+std::pair<node<T> *, unsigned int>  node<T>::find (const T& elem) {
     // See if the element is here
     unsigned int index = 0;
     auto i = data_.begin();
     for (;i != data_.end(); ++i) {
         if (*i == elem) {
-            return true;
+            return std::make_pair (this, index);
         }
         if (*i > elem) { // Left child
             if (children_[index] != nullptr) {
@@ -179,7 +194,7 @@ bool node<T>::find (const T& elem) {
 #ifdef _DEBUG_
                 std::cout << "Find wanted to delegate to a child on he left of " << *i << " but it was null\n";;
 #endif
-                return false;
+                return std::make_pair(static_cast<node<T>*> (nullptr), 0);
             }
         }
         index++;
@@ -189,7 +204,7 @@ bool node<T>::find (const T& elem) {
     // There's only one spot left, the rightmost slot.
     // It just so happens that index is also this index, since it is post incremented.
     if (children_[index] == nullptr) {
-        return false;
+        return std::make_pair(static_cast<node<T>*> (nullptr), 0);
     } else {
         return children_[index]->find (elem);
     }
