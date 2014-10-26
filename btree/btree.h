@@ -18,6 +18,8 @@
 
 #define _DEBUG_
 
+template <typename T>
+class btree_iterator;
 
 // My class for handling btree nodes.
 template <typename T>
@@ -26,17 +28,19 @@ class node {
         node (const unsigned int node_size, node<T> * parent, unsigned int child_index);
         ~node ();
 
-        std::pair<node<T> *, unsigned int> insert (const T& elem);
+        std::pair<btree_iterator<T>, bool> insert (const T& elem);
         std::pair<node<T> *, unsigned int> find (const T& elem);
-    private:
+        std::pair<node<T> *, unsigned int> next_node (void);
+        std::pair<node<T> *, unsigned int> previous_node (void);
+        
         const unsigned int node_size_;
-        const node<T>* parent_;
+        node<T>* parent_;
+        
         // stores the value i, where we are the i-th child of the parent.
         const unsigned int child_index_; 
         const unsigned int max_children_;
         const unsigned int max_children_index_;
         
-        void shift_children (unsigned int idx);
         std::vector<T> data_;
         node<T>** children_;
 };
@@ -207,7 +211,7 @@ class btree {
         ~btree();
 
     private:
-        node <T> * root;
+        node <T> * root_;
         // The details of your implementation go here
 };
 

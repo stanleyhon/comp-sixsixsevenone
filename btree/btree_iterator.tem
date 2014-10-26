@@ -8,18 +8,56 @@ btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index) :
     target_ = target;
 }
 
-// output tree to stream with space delimiter
 template <typename T>
 bool operator==(btree_iterator<T>& left, btree_iterator<T>& right) {
-//    if (left.target_ == right.target_ && left.data_index_ == right.data_index_) {
-//        return true;
-//    } else {
-//        return false;
-//    }
-    return true;
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_) {
+        return true;
+    } else {
+        return false;
+    }
+    assert (0);
+}
+
+template <typename T>
+bool operator!=(btree_iterator<T>& left, btree_iterator<T>& right) {
+    return (!(left == right));
 }
 
 
 template <typename T>
-const_btree_iterator<T>::const_btree_iterator () {};
+btree_iterator<T>& btree_iterator<T>::operator++ () { // prefix increment
+    std::cout << "btree_iterator ++ called\n";
+    if (target_ != nullptr) {
+        std::cout << "btree_iterator target not nullptr\n";
+        // this iterator was already at the last element
+        if (target_->data_.size() == data_index_ + 1) {
+            auto i = target_->next_node();
+            target_ = i.first; // copy the node pointer
+            data_index_ = i.second; // copy the data index
+            return *this;
+        } else {
+            data_index_++;
+            return *this;
+        }
+    } else {
+        return *this;
+    }
+    assert (false);
+}
 
+template <typename T>
+btree_iterator<T> btree_iterator<T>::operator++ (int) { // postfix increment
+    std::cout << "btree_prefix called\n";;
+    btree_iterator<T> old(target_, data_index_);
+
+    ++(*this);
+
+    return old;
+}
+
+template <typename T>
+T btree_iterator<T>::operator* () {
+    assert (target_ != nullptr);
+    assert (data_index_ < target_->data_.size());
+    return target_->data_[data_index_];
+}

@@ -1,30 +1,36 @@
 // constructor
 template <typename T>
 btree<T>::btree(size_t maxNodeElems) {
-   root = new node<T>(maxNodeElems, nullptr, 0); 
+   root_ = new node<T>(maxNodeElems, nullptr, 0);
+   assert (root_ != nullptr);
+   std::cout << "Constructor has set root to " << root_ << " \n";
 }
 
 // Copy constructor
 template <typename T>
 btree<T>::btree(const btree<T>& original) {
+    assert (0);
     // do many things
 }
 
 // move constructor
 template <typename T>
 btree<T>::btree(btree<T>&& original) {
+    assert (0);
     // do many things
 }
 
 // copy assignment
 template <typename T>
 btree<T>& btree<T>::operator=(const btree<T>& rhs) {
+    assert (0);
     // do many things
 }
 
 // move assignment
 template <typename T>
 btree<T>& btree<T>::operator=(btree<T>&& rhs) {
+    assert (0);
     // do many things
 }
 
@@ -39,19 +45,29 @@ std::ostream& operator<<(std::ostream& os, const btree<T>& tree) {
 // insert into the tree
 template <typename T>
 std::pair<btree_iterator<T>, bool> btree<T>::insert(const T& elem) {
+#ifdef _DEBUG_
+    std::cout << "btree insertion called\n";
+#endif
+    assert (root_ != nullptr);
+    std::pair<btree_iterator<T>, bool> tmp = root_->insert (elem);
+#ifdef _DEBUG_
+    std::cout << "successfully called node insert\n";
+#endif
 
-    return std::make_pair (btree_iterator<T>(), true);
+    return tmp; 
 }
 
 // iterator
 template <typename T>
 btree_iterator<T> btree<T>::find(const T& elem) {
+    assert (0);
     return btree_iterator<T>();
 }
 
 // const_iterator
 template <typename T>
 const_btree_iterator<T> btree<T>::find(const T& elem) const {
+    assert (0);
     return const_btree_iterator<T>();
 }
 
@@ -65,8 +81,28 @@ btree<T>::~btree() {};
 
 template <typename T>
 btree_iterator<T> btree<T>::begin () {
-    btree_iterator<T> i (root, 0);
-    return i;
+    // go as far down and as far left as possible
+    node<T> * target = root_;
+    // Does this node have children?
+
+    while (target->data_.size () == target->node_size_) { // yes it can
+        // go to the leftmost and repeat
+        int idx = 0;
+        while (idx < target->max_children_index_) {
+            if (target->children_[idx] != nullptr) {
+                target = target->children_[idx];
+                break;
+            }
+            idx++;
+        }
+        if (idx == target->max_children_index_) { // this implies that this guy has no children
+            return btree_iterator<T> (target, 0);
+        }
+    }
+
+    // We found a node that can't have children (i.e. not full)
+    // So then this is the leftmost.
+    return btree_iterator<T> (target, 0);
 }
 
 template <typename T>
@@ -92,9 +128,15 @@ node<T>::node (const unsigned int node_size, node<T> * parent, const unsigned in
     children_ = new node<T>* [number];
     unsigned int idx = 0;
     while (idx < number) {
+#ifdef _DEBUG_
+        std::cout << "Setting data location " << idx << " to nullptr\n";
+#endif
         children_[idx] = nullptr;
         idx++;
     }
+#ifdef _DEBUG_
+        std::cout << "Node construction completed.\n";
+#endif
 }
 
 // node destructor
@@ -114,14 +156,17 @@ node<T>::~node () {
 
 // insert an element into the btree
 template <typename T>
-std::pair<node<T> *, unsigned int> node<T>::insert (const T& elem) {
+std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
+#ifdef _DEBUG_
+    std::cout << "node insertion called.\n";
+#endif
     // Lets see if it has a place in this node
     if (data_.size() < node_size_) {
         unsigned int idx = 0;
         auto i = data_.begin();
         for (; i != data_.end(); ++i) {
             if (*i == elem) { // It's already there
-                return std::make_pair(static_cast<node<T>*> (nullptr), 0);
+                return std::make_pair(btree_iterator<T> (this, idx), false);
             } else if (*i > elem) { // it goes on the left.
                 break;
             }
@@ -135,8 +180,8 @@ std::pair<node<T> *, unsigned int> node<T>::insert (const T& elem) {
         // is right at the end of the list, since this node is not full
         } else if (i == data_.end()) {
             data_.push_back (elem);
-        } 
-        return std::make_pair (this, idx);
+        }
+        return std::make_pair (btree_iterator<T> (this, idx), true);
     // no room here, delegate to a child
     } else {
 #ifdef _DEBUG_
@@ -171,7 +216,6 @@ std::pair<node<T> *, unsigned int> node<T>::insert (const T& elem) {
 
     // Should never reach this point.
     assert (false);
-    return std::make_pair(static_cast<node<T>*> (nullptr), 0);
 }
 
 // find an element in the btree
@@ -208,5 +252,27 @@ std::pair<node<T> *, unsigned int>  node<T>::find (const T& elem) {
     } else {
         return children_[index]->find (elem);
     }
+}
+
+// Find the next data item
+// This assumes you have exausted all of the data elements in this node.
+template <typename T>
+std::pair<node<T> *, unsigned int> node<T>::next_node (void) {
+    if (parent_ == nullptr) {
+        return std::make_pair(static_cast<node<T>*> (nullptr), 0);
+    }
+
+    assert (parent_ != nullptr);
+
+    if (child_index_ == max_children_index_) {
+        // We're the rightmost child of someone
+        // So just return our parent's -> next ();
+        return parent_->next_node();
+    } else { // We were not the rightmost child of someone.
+        return std::make_pair(parent_, child_index_);
+    }
+
+    assert (false);
+    return std::make_pair (static_cast<node<T>*> (nullptr), 0);
 }
 
