@@ -86,22 +86,18 @@ btree_iterator<T> btree<T>::begin () {
     // Does this node have children?
 
     while (target->data_.size () == target->node_size_) { // yes it can
-        // go to the leftmost and repeat
-        int idx = 0;
-        while (idx < target->max_children_index_) {
-            if (target->children_[idx] != nullptr) {
-                target = target->children_[idx];
-                break;
-            }
-            idx++;
-        }
-        if (idx == target->max_children_index_) { // this implies that this guy has no children
+        // Then the left most is either the leftmost of child 0 or my own data at index 0
+        if (target->children_[0] == nullptr) { // then its just index 0 here
             return btree_iterator<T> (target, 0);
+        } else { // repeat on lower level
+            assert (target->children_[0] != nullptr);
+            target = target->children_[0];
         }
     }
-
-    // We found a node that can't have children (i.e. not full)
-    // So then this is the leftmost.
+    
+    // If we get to this point, we've gotten to a node where
+    // 1. It may or may not have children
+    // 2. but it does not have a child at index 0
     return btree_iterator<T> (target, 0);
 }
 
@@ -165,6 +161,9 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
         unsigned int idx = 0;
         auto i = data_.begin();
         for (; i != data_.end(); ++i) {
+#ifdef _DEBUG
+            std::cout << "performing dupe check on " << *i << " vs " << elem << " \n";
+#endif
             if (*i == elem) { // It's already there
                 return std::make_pair(btree_iterator<T> (this, idx), false);
             } else if (*i > elem) { // it goes on the left.
@@ -189,7 +188,9 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
 #endif
         unsigned int childIndex = 0;
         for (auto dataItem = data_.begin(); dataItem != data_.end(); ++dataItem) {
-            if (*dataItem > elem) { // it goes on the left of this one
+            if (*dataItem == elem) { // Already exists!
+                return std::make_pair(btree_iterator<T> (this, childIndex), false);
+            } else if (*dataItem > elem) { // it goes on the left of this one
 #ifdef _DEBUG_
                 std::cout << "Insertion is delegating to the child left of " << *dataItem << "\n";
 #endif
@@ -256,6 +257,7 @@ std::pair<node<T> *, unsigned int>  node<T>::find (const T& elem) {
 
 // Find the next data item
 // This assumes you have exausted all of the data elements in this node.
+// This assumes you have printed out all children of this node
 template <typename T>
 std::pair<node<T> *, unsigned int> node<T>::next_node (void) {
     if (parent_ == nullptr) {
@@ -273,6 +275,29 @@ std::pair<node<T> *, unsigned int> node<T>::next_node (void) {
     }
 
     assert (false);
-    return std::make_pair (static_cast<node<T>*> (nullptr), 0);
+}
+
+// Find the previous data item
+// This assumes you have exausted all of the data elements in this node.
+// This assumes you have printed out all children of this node
+template <typename T>
+std::pair<node<T> *, unsigned int> node<T>::previous_node (void) {
+    if (parent_ == nullptr) {
+        return std::make_pair(static_cast<node<T>*> (nullptr), 0);
+    }
+
+    assert (parent_ != nullptr);
+
+    if (child_index_ == 0) {
+        // We're the leftmost of our parent.
+        // return their previous_node()
+        return parent_->previous_node();
+    } else { // We were not the leftmost child of a parent
+        // Say we are child 1.
+        // The correct parental data index is 0, since our index (1) is on the right of index 0's data.
+        return std::make_pair(parent_, child_index_ - 1);
+    }
+
+    assert (false);
 }
 

@@ -9,17 +9,19 @@
  **/
 
 template <typename T> class btree_iterator;
-template <typename T> bool operator== (btree_iterator<T>& left, btree_iterator<T>& right);
-template <typename T> bool operator!= (btree_iterator<T>& left, btree_iterator<T>& right);
+template <typename T> bool operator== (const btree_iterator<T>& left, const btree_iterator<T>& right);
+template <typename T> bool operator!= (const btree_iterator<T>& left, const btree_iterator<T>& right);
 
 template <typename T>
 class btree_iterator {
     public:
         btree_iterator (node<T> * target, unsigned int data_index);
-        friend bool operator==<T> (btree_iterator<T>& left, btree_iterator<T>& right);
-        friend bool operator!=<T> (btree_iterator<T>& left, btree_iterator<T>& right);
+        friend bool operator==<T> (const btree_iterator<T>& left, const btree_iterator<T>& right);
+        friend bool operator!=<T> (const btree_iterator<T>& left, const btree_iterator<T>& right);
         btree_iterator<T>& operator++ (); // prefix increment
         btree_iterator<T> operator++ (int); // postfix increment
+        btree_iterator<T>& operator-- (); // prefix increment
+        btree_iterator<T> operator-- (int); // postfix increment
         T operator* ();
     private:
         node<T> * target_; // which node does this iterator point at?

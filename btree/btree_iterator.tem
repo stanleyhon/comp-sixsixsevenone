@@ -9,7 +9,7 @@ btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index) :
 }
 
 template <typename T>
-bool operator==(btree_iterator<T>& left, btree_iterator<T>& right) {
+bool operator==(const btree_iterator<T>& left, const btree_iterator<T>& right) {
     if (left.target_ == right.target_ && left.data_index_ == right.data_index_) {
         return true;
     } else {
@@ -19,38 +19,100 @@ bool operator==(btree_iterator<T>& left, btree_iterator<T>& right) {
 }
 
 template <typename T>
-bool operator!=(btree_iterator<T>& left, btree_iterator<T>& right) {
+bool operator!=(const btree_iterator<T>& left, const btree_iterator<T>& right) {
     return (!(left == right));
 }
 
 
 template <typename T>
 btree_iterator<T>& btree_iterator<T>::operator++ () { // prefix increment
-    std::cout << "btree_iterator ++ called\n";
     if (target_ != nullptr) {
-        std::cout << "btree_iterator target not nullptr\n";
         // this iterator was already at the last element
         if (target_->data_.size() == data_index_ + 1) {
-            auto i = target_->next_node();
-            target_ = i.first; // copy the node pointer
-            data_index_ = i.second; // copy the data index
-            return *this;
+            // Is there a rightmost child eligible?
+            if (target_->children_[target_->max_children_index_] != nullptr) {
+                target_ = target_->children_[target_->max_children_index_];
+                data_index_ = 0;
+            } else { // go to the next node then
+                auto i = target_->next_node();
+                target_ = i.first; // copy the node pointer
+                data_index_ = i.second; // copy the data index
+            }
         } else {
-            data_index_++;
-            return *this;
+            // Are there any eligible children?
+            if (target_->children_[data_index_ + 1] != nullptr) { // yes there is
+                target_ = target_->children_[data_index_ + 1];
+                data_index_ = 0; 
+                // But wait, there's an edge case here. It's possible there's a smaller child somewhere below.
+                while (target_->children_[0] != nullptr) { // There's actually a smaller one!
+                    target_ = target_->children_[0];
+                }
+            } else { // nope go next
+                data_index_++;
+            }
         }
-    } else {
-        return *this;
     }
-    assert (false);
+    return *this;
 }
 
 template <typename T>
 btree_iterator<T> btree_iterator<T>::operator++ (int) { // postfix increment
-    std::cout << "btree_prefix called\n";;
     btree_iterator<T> old(target_, data_index_);
 
     ++(*this);
+
+    return old;
+}
+
+template <typename T>
+btree_iterator<T>& btree_iterator<T>::operator-- () { // prefix increment
+    if (target_ != nullptr) {
+        // are we the first element?
+        if (data_index_ == 0) { // yes
+            // Do we have a child on index 0?
+            if (target_->children_[0] != nullptr) { // yes!
+                target_ = target_->children_[0];
+                // There is an edgecase here where there are right-er children.
+                while (target_->children_[target_->max_children_index_] != nullptr) {
+                    target_ = target_->children_[target_->max_children_index_];
+                }
+                // Now set data_index_ to the highest it can be (i.e. data_.size() - 1)
+                data_index_ = target_->data_.size() - 1;
+            } else if (target_->parent_ == nullptr) {
+                target_ = nullptr;
+                data_index_ = 0;
+            } else {
+                unsigned int childIndex = target_->child_index_; // this indicates which child we are of the parent
+                if (childIndex == 0) { // We were their leftmost child
+                    auto i = target_->previous_node();
+                    target_ = i.first;
+                    data_index_ = i.second;
+                } else { // We weren't, so just reduce our ID by 1 and thats the data index we want
+                    target_ = target_->parent_;
+                    data_index_ = childIndex - 1;
+                }
+            }
+        } else { // No, we're not the first
+            // Check for eligible children on the left?
+            if (target_->children_[data_index_] == nullptr) { // no eligible child.
+                data_index_--;
+            } else { // Yes eligible child
+                target_ = target_->children_[data_index_];
+                while (target_->children_[target_->max_children_index_] != nullptr) {
+                    target_ = target_->children_[target_->max_children_index_];
+                }
+                data_index_ = target_->data_.size() - 1; // size returns how many elements, we want an index to the last one
+            }
+        }
+    }
+    return *this;
+}
+
+template <typename T>
+btree_iterator<T> btree_iterator<T>::operator-- (int) { // postfix increment
+    btree_iterator<T> old (target_, data_index_);
+
+    --(*this);
 
     return old;
 }
