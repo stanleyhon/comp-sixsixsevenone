@@ -9,37 +9,31 @@ btree<T>::btree(size_t maxNodeElems) {
 // Copy constructor
 template <typename T>
 btree<T>::btree(const btree<T>& original) {
-    assert (0);
-    // do many things
+   root_ = new node<T> (*(original.root_), nullptr);
 }
 
 // move constructor
 template <typename T>
 btree<T>::btree(btree<T>&& original) {
-    assert (0);
-    // do many things
+    root_ = original.root_;
+    original.root_ = nullptr;
 }
 
 // copy assignment
 template <typename T>
 btree<T>& btree<T>::operator=(const btree<T>& rhs) {
-    assert (0);
-    // do many things
+    delete root_;
+    root_ = new node<T> (*(rhs.root_), nullptr);
+    return *this;
 }
 
 // move assignment
 template <typename T>
 btree<T>& btree<T>::operator=(btree<T>&& rhs) {
-    assert (0);
-    // do many things
-}
-
-// output tree to stream with space delimiter
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const btree<T>& tree) {
-
-    os << "HI!";
-    return os;
+    delete root_;
+    root_ = rhs.root_;
+    rhs.root_ = nullptr;
+    return *this;
 }
 
 // insert into the tree
@@ -73,7 +67,9 @@ const_btree_iterator<T> btree<T>::find(const T& elem) const {
 
 // destructor
 template <typename T>
-btree<T>::~btree() {};
+btree<T>::~btree() {
+    delete root_;
+}
 
 /***********************/
 /*  Iterator Business  */
@@ -88,7 +84,7 @@ btree_iterator<T> btree<T>::begin () {
     while (target->data_.size () == target->node_size_) { // yes it can
         // Then the left most is either the leftmost of child 0 or my own data at index 0
         if (target->children_[0] == nullptr) { // then its just index 0 here
-            return btree_iterator<T> (target, 0);
+            return btree_iterator<T> (target, 0, root_);
         } else { // repeat on lower level
             assert (target->children_[0] != nullptr);
             target = target->children_[0];
@@ -98,12 +94,12 @@ btree_iterator<T> btree<T>::begin () {
     // If we get to this point, we've gotten to a node where
     // 1. It may or may not have children
     // 2. but it does not have a child at index 0
-    return btree_iterator<T> (target, 0);
+    return btree_iterator<T> (target, 0, root_);
 }
 
 template <typename T>
 btree_iterator<T> btree<T>:: end () {
-    btree_iterator<T> i (nullptr, 0);
+    btree_iterator<T> i (nullptr, 0, root_);
     return i;
 }
 
@@ -121,7 +117,7 @@ node<T>::node (const unsigned int node_size, node<T> * parent, const unsigned in
 #endif
     // There is one more children than there is data items
     unsigned int number = node_size + 1;
-    children_ = new node<T>* [number];
+    children_ = new node<T>* [number](); // added () for zero initialization
     unsigned int idx = 0;
     while (idx < number) {
 #ifdef _DEBUG_
@@ -133,6 +129,29 @@ node<T>::node (const unsigned int node_size, node<T> * parent, const unsigned in
 #ifdef _DEBUG_
         std::cout << "Node construction completed.\n";
 #endif
+}
+
+// node copy constructor
+template <typename T>
+node<T>::node (const node<T>& other, const node<T>* newParent) :
+    node_size_(other.node_size_), parent_(const_cast<node<T>*>(newParent)), child_index_(other.child_index_),
+    max_children_(other.max_children_), max_children_index_(other.max_children_index_) {
+
+    // copy data_ which is an STL vector, so copy is implemented
+    data_ = other.data_;
+
+    // copy children, which is a bit more difficult
+    children_ = new node<T>* [max_children_]();
+    unsigned int idx = 0;
+    assert (max_children_ == max_children_index_ + 1);
+    while (idx < max_children_) {
+        if (other.children_[idx] != nullptr) {
+            node<T> * clone = new node<T> (*(other.children_[idx]), this);
+            assert (clone != nullptr);
+            children_[idx] = clone;
+        }
+        idx++;
+    }
 }
 
 // node destructor
@@ -148,6 +167,10 @@ node<T>::~node () {
         }
         idx++;
     }
+    // Then delete the actual children array
+    if (children_ != nullptr) {
+        delete children_;
+    }
 }
 
 // insert an element into the btree
@@ -156,6 +179,12 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
 #ifdef _DEBUG_
     std::cout << "node insertion called.\n";
 #endif
+    // we need to find out root to create a iterators:
+    node<T> * root = this;
+    while (root->parent_ != nullptr) {
+        root = root->parent_;
+    }
+
     // Lets see if it has a place in this node
     if (data_.size() < node_size_) {
         unsigned int idx = 0;
@@ -165,7 +194,7 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
             std::cout << "performing dupe check on " << *i << " vs " << elem << " \n";
 #endif
             if (*i == elem) { // It's already there
-                return std::make_pair(btree_iterator<T> (this, idx), false);
+                return std::make_pair(btree_iterator<T> (this, idx, root), false);
             } else if (*i > elem) { // it goes on the left.
                 break;
             }
@@ -180,7 +209,7 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
         } else if (i == data_.end()) {
             data_.push_back (elem);
         }
-        return std::make_pair (btree_iterator<T> (this, idx), true);
+        return std::make_pair (btree_iterator<T> (this, idx, root), true);
     // no room here, delegate to a child
     } else {
 #ifdef _DEBUG_
@@ -189,7 +218,7 @@ std::pair<btree_iterator<T>, bool> node<T>::insert (const T& elem) {
         unsigned int childIndex = 0;
         for (auto dataItem = data_.begin(); dataItem != data_.end(); ++dataItem) {
             if (*dataItem == elem) { // Already exists!
-                return std::make_pair(btree_iterator<T> (this, childIndex), false);
+                return std::make_pair(btree_iterator<T> (this, childIndex, root), false);
             } else if (*dataItem > elem) { // it goes on the left of this one
 #ifdef _DEBUG_
                 std::cout << "Insertion is delegating to the child left of " << *dataItem << "\n";
@@ -299,5 +328,35 @@ std::pair<node<T> *, unsigned int> node<T>::previous_node (void) {
     }
 
     assert (false);
+}
+
+
+// output tree to stream with space delimiter
+// Well apparently you guys want a breadth first search....
+// So here goes
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const btree<T>& tree) {
+    std::queue<node<T> *> q;
+    if (tree.root_ != nullptr) { // It actually has elements
+        q.push (tree.root_);
+    }
+    while (q.empty () == false) {
+        node<T> * current = q.front ();
+        q.pop ();
+        assert (current != nullptr);
+        // Print out all the elements in this node.
+        for (auto elem = current->data_.begin(); elem != current->data_.end(); ++elem) {
+            os << *elem << " ";
+        }
+        // Queue each of the children.
+        unsigned int idx = 0;
+        while (idx <= current->max_children_index_) {
+            if (current->children_[idx] != nullptr) {
+                q.push (current->children_[idx]);
+            }
+            idx++;
+        }
+    }
+    return os;
 }
 

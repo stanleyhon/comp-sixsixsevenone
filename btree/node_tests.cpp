@@ -35,5 +35,10 @@ int main (void) {
     assert (root->find (12) == std::make_pair(nullNode, 0u));
     std::cout << "PASS...\n";
 
+    std::cout << "** Testing clone constructor\n";
+    node<int> * newClone = new node<int> (*root, nullptr);
+    assert (newClone != root);
+    assert (newClone != nullptr);
+
     return 0;
 }

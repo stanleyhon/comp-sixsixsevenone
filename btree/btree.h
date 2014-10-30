@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <utility>
 #include <vector>
+#include <queue>
 #include <cassert>
 
 #define _DEBUG_
@@ -26,13 +27,15 @@ template <typename T>
 class node {
     public:
         node (const unsigned int node_size, node<T> * parent, unsigned int child_index);
+        node (const node<T>& other, const node<T>* newParent);
         ~node ();
 
         std::pair<btree_iterator<T>, bool> insert (const T& elem);
         std::pair<node<T> *, unsigned int> find (const T& elem);
         std::pair<node<T> *, unsigned int> next_node (void);
         std::pair<node<T> *, unsigned int> previous_node (void);
-        
+ 
+               
         const unsigned int node_size_;
         node<T>* parent_;
         
@@ -60,7 +63,9 @@ class btree {
         friend class const_btree_iterator<T>;
 
         typedef btree_iterator<T> iterator;
+//        typedef std::reverse_iterator<iterator> reverse_iterator;
         typedef const_btree_iterator<T> const_iterator;
+//        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
         /** Hmm, need some iterator typedefs here... friends? **/
 
         /**
@@ -134,6 +139,8 @@ class btree {
 
         iterator begin (); 
         iterator end ();
+        //reverse_iterator rbegin ();
+        //reverse_iterator rend ();
         /**
          * The following can go here
          * -- begin() 

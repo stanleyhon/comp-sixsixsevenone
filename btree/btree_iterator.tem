@@ -2,27 +2,22 @@
 
 // constructor
 template <typename T>
-btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index) :
-    data_index_(data_index) {
-
-    target_ = target;
-}
+btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index, const node<T> * root) :
+    root_(root), target_(target), data_index_(data_index) {}
 
 template <typename T>
 bool operator==(const btree_iterator<T>& left, const btree_iterator<T>& right) {
-    if (left.target_ == right.target_ && left.data_index_ == right.data_index_) {
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
         return true;
     } else {
         return false;
     }
-    assert (0);
 }
 
 template <typename T>
 bool operator!=(const btree_iterator<T>& left, const btree_iterator<T>& right) {
     return (!(left == right));
 }
-
 
 template <typename T>
 btree_iterator<T>& btree_iterator<T>::operator++ () { // prefix increment
@@ -57,7 +52,7 @@ btree_iterator<T>& btree_iterator<T>::operator++ () { // prefix increment
 
 template <typename T>
 btree_iterator<T> btree_iterator<T>::operator++ (int) { // postfix increment
-    btree_iterator<T> old(target_, data_index_);
+    btree_iterator<T> old(target_, data_index_, root_);
 
     ++(*this);
 
@@ -104,13 +99,22 @@ btree_iterator<T>& btree_iterator<T>::operator-- () { // prefix increment
                 data_index_ = target_->data_.size() - 1; // size returns how many elements, we want an index to the last one
             }
         }
+    } else { // target_ == nullptr (i.e. end) we need to be able to find the last element
+        node<T> * current = const_cast<node<T>*> (root_);
+        while (current->children_[current->max_children_index_] != nullptr) {
+            current = current->children_[current->max_children_index_];
+        }
+        // now that we're as far right as we can go. pick the right most data vector element.
+        target_ = current;
+        data_index_ = target_->data_.size() - 1;
     }
+
     return *this;
 }
 
 template <typename T>
 btree_iterator<T> btree_iterator<T>::operator-- (int) { // postfix increment
-    btree_iterator<T> old (target_, data_index_);
+    btree_iterator<T> old (target_, data_index_, root_);
 
     --(*this);
 
@@ -122,4 +126,11 @@ T btree_iterator<T>::operator* () {
     assert (target_ != nullptr);
     assert (data_index_ < target_->data_.size());
     return target_->data_[data_index_];
+}
+
+template <typename T>
+T* btree_iterator<T>::operator->() {
+    assert (target_ != nullptr);
+    assert (data_index_ < target_->data_.size());
+    return &(target_->data_[data_index_]);
 }
