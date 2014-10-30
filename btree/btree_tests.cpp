@@ -206,15 +206,24 @@ int main (void) {
         std::cout << "DEREF: " << *ibegin << " \n";
     }
     std::cout << copyconstruction << "\n";
-    ibegin--;
-    for (;ibegin != copyconstruction.begin(); ibegin--) {
-        std::cout << "BACKDEREF: " << *ibegin << " \n";
-    }
-    std::cout << copyconstruction << "\n";
 
-    //for (auto revIt = copyconstruction.rbegin(); revIt != copyconstruction.rend(); ++revIt) {
-    //    std::cout << "DEREF: " << *revIt << " \n";
+    std::cout << "**** Testing reverse iterator\n";
+    for (auto revIt = copyconstruction.rbegin(); revIt != copyconstruction.rend(); ++revIt) {
+        std::cout << "DEREF: " << *revIt << " \n";
+    }
+
+    std::cout << "**** Testing const iterators\n";
+    for (auto ci = copyconstruction.cbegin(); ci != copyconstruction.cend(); ++ci) {
+        std::cout << "DEREF: " << *ci << " \n";
+    }
+
+    std::cout << "**** Testing const reverse iterator\n";
+    auto bleh = copyconstruction.crbegin();
+    (void) bleh;
+    //for (auto cr = copyconstruction.crbegin(); cr != copyconstruction.crend(); ++cr) {
+    //    std::cout << "DEREF: " << *cr << " \n";
     //}
+
     return 0;
 }
 

@@ -63,9 +63,9 @@ class btree {
         friend class const_btree_iterator<T>;
 
         typedef btree_iterator<T> iterator;
-//        typedef std::reverse_iterator<iterator> reverse_iterator;
+        typedef std::reverse_iterator<iterator> reverse_iterator;
         typedef const_btree_iterator<T> const_iterator;
-//        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
         /** Hmm, need some iterator typedefs here... friends? **/
 
         /**
@@ -137,10 +137,22 @@ class btree {
          */
         friend std::ostream& operator<< <T> (std::ostream& os, const btree<T>& tree);
 
+        // Standard
         iterator begin (); 
         iterator end ();
-        //reverse_iterator rbegin ();
-        //reverse_iterator rend ();
+
+        // Reverse
+        reverse_iterator rbegin ();
+        reverse_iterator rend ();
+
+        // Const Standard
+        const_iterator cbegin ();
+        const_iterator cend ();
+
+        // Const Reverse
+        const_reverse_iterator crbegin () const;
+        //const_reverse_iterator crend ();
+
         /**
          * The following can go here
          * -- begin() 

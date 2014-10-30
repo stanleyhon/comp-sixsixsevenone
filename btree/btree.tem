@@ -103,6 +103,54 @@ btree_iterator<T> btree<T>:: end () {
     return i;
 }
 
+// Const Standard
+template <typename T>
+const_btree_iterator<T> btree<T>::cbegin () {
+    btree_iterator<T> bi = begin ();
+    return const_btree_iterator<T> (bi.target_, 0, bi.root_);
+}
+
+template <typename T>
+const_btree_iterator<T> btree<T>::cend () {
+    btree_iterator<T> bi = end ();
+    return const_btree_iterator<T> (bi.target_, 0, bi.root_);
+}
+
+// Reverse
+template <typename T>
+std::reverse_iterator<btree_iterator<T>> btree<T>::rbegin () {
+    return std::reverse_iterator<btree_iterator<T>>(end());
+}
+
+template <typename T>
+std::reverse_iterator<btree_iterator<T>> btree<T>::rend () {
+    return std::reverse_iterator<btree_iterator<T>>(begin());
+}
+//reverse_iterator rbegin()
+//{ return reverse_iterator(end()); }
+//
+//reverse_iterator rend()
+//{ return reverse_iterator(begin()); }
+//
+//const_reverse_iterator rend() const
+//{ return const_reverse_iterator(begin()); }
+
+// Const Reverse
+//typedef reverse_iterator<const_iterator> const_reverse_iterator;
+//typedef reverse_iterator<iterator> reverse_iterator;
+//const_reverse_iterator rbegin() const
+//{ return const_reverse_iterator(end()); }
+//
+template <typename T>
+std::reverse_iterator<const_btree_iterator<T>> btree<T>::crbegin () const {
+    return std::reverse_iterator<const_btree_iterator<T>>(end());
+}
+
+//template <typename T>
+//std::reverse_iterator<const_btree_iterator<T>> btree<T>::crend () {
+//    return std::reverse_iterator<const_btree_iterator<T>>(begin());
+//}
+
 /***********************/
 /* Node Implementation */
 /***********************/
@@ -131,7 +179,7 @@ node<T>::node (const unsigned int node_size, node<T> * parent, const unsigned in
 #endif
 }
 
-// node copy constructor
+// node copy construction
 template <typename T>
 node<T>::node (const node<T>& other, const node<T>* newParent) :
     node_size_(other.node_size_), parent_(const_cast<node<T>*>(newParent)), child_index_(other.child_index_),
