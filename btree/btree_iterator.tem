@@ -10,20 +10,6 @@ btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index, co
     root_(root), target_(target), data_index_(data_index) {}
 
 template <typename T>
-bool operator==(const btree_iterator<T>& left, const btree_iterator<T>& right) {
-    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-template <typename T>
-bool operator!=(const btree_iterator<T>& left, const btree_iterator<T>& right) {
-    return (!(left == right));
-}
-
-template <typename T>
 btree_iterator<T>& btree_iterator<T>::operator++ () { // prefix increment
     if (target_ != nullptr) {
         // this iterator was already at the last element
@@ -151,19 +137,6 @@ template <typename T>
 const_btree_iterator<T>::const_btree_iterator (node<T> * target, unsigned int data_index, const node<T> * root) :
     root_(root), target_(target), data_index_(data_index) {}
 
-template <typename T>
-bool operator==(const const_btree_iterator<T>& left, const const_btree_iterator<T>& right) {
-    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-template <typename T>
-bool operator!=(const const_btree_iterator<T>& left, const const_btree_iterator<T>& right) {
-    return (!(left == right));
-}
 
 template <typename T>
 const_btree_iterator<T>& const_btree_iterator<T>::operator++ () { // prefix increment
@@ -279,4 +252,61 @@ T* const_btree_iterator<T>::operator->() {
     assert (target_ != nullptr);
     assert (data_index_ < target_->data_.size());
     return &(target_->data_[data_index_]);
+}
+
+// ***************************************************************** //
+// ******************** == and != friends ************************** //
+// ***************************************************************** //
+template <typename T>
+bool operator==(const btree_iterator<T>& left, const btree_iterator<T>& right) {
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+template <typename T>
+bool operator!=(const btree_iterator<T>& left, const btree_iterator<T>& right) {
+    return (!(left == right));
+}
+
+template <typename T>
+bool operator==(const const_btree_iterator<T>& left, const const_btree_iterator<T>& right) {
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+template <typename T>
+bool operator!=(const const_btree_iterator<T>& left, const const_btree_iterator<T>& right) {
+    return (!(left == right));
+}
+template <typename T>
+bool operator==(const btree_iterator<T>& left, const const_btree_iterator<T>& right) {
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+template <typename T>
+bool operator!=(const btree_iterator<T>& left, const const_btree_iterator<T>& right) {
+    return (!(left == right));
+}
+template <typename T>
+bool operator==(const const_btree_iterator<T>& left, const btree_iterator<T>& right) {
+    if (left.target_ == right.target_ && left.data_index_ == right.data_index_ && left.root_ == right.root_) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+template <typename T>
+bool operator!=(const const_btree_iterator<T>& left, const btree_iterator<T>& right) {
+    return (!(left == right));
 }

@@ -3,7 +3,6 @@ template <typename T>
 btree<T>::btree(size_t maxNodeElems) {
    root_ = new node<T>(maxNodeElems, nullptr, 0);
    assert (root_ != nullptr);
-   std::cout << "Constructor has set root to " << root_ << " \n";
 }
 
 // Copy constructor

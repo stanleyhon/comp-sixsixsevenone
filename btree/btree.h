@@ -17,7 +17,6 @@
 #include <queue>
 #include <cassert>
 
-#define _DEBUG_
 
 template <typename T>
 class btree_iterator;
