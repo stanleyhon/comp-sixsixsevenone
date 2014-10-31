@@ -218,11 +218,32 @@ int main (void) {
     }
 
     std::cout << "**** Testing const reverse iterator\n";
-    auto bleh = copyconstruction.crbegin();
-    (void) bleh;
-    //for (auto cr = copyconstruction.crbegin(); cr != copyconstruction.crend(); ++cr) {
-    //    std::cout << "DEREF: " << *cr << " \n";
-    //}
+    for (auto cr = copyconstruction.crbegin(); cr != copyconstruction.crend(); ++cr) {
+        auto test = cr;
+        std::cout << "DEREF: " << *test << " \n";
+    }
+
+    std::cout << "**** Testing non-const find\n";
+    auto location = copyconstruction.find (3);
+    std::cout << "DEREF (3): " << *location << " \n";
+    location = copyconstruction.find (555);
+    assert (location == copyconstruction.end ());
+
+    std::cout << "**** Testing const find\n";
+    btree<int> anotherTree (5);
+    anotherTree.insert (10);
+    anotherTree.insert (62);
+    anotherTree.insert (63);
+    anotherTree.insert (18);
+    anotherTree.insert (81);
+    anotherTree.insert (61);
+    anotherTree.insert (58);
+
+    const btree<int> constTree = anotherTree;
+    auto constLocation = constTree.find (18);
+    std::cout << "DEREF (18): " << *constLocation << " \n";
+    constLocation = constTree.find (60);
+    assert (constLocation == constTree.cend());
 
     return 0;
 }

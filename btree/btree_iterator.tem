@@ -2,6 +2,10 @@
 
 // constructor
 template <typename T>
+btree_iterator<T>::btree_iterator (const const_btree_iterator<T>& other) :
+    root_(other.root_), target_(other.target_), data_index_(other.data_index_) {}
+
+template <typename T>
 btree_iterator<T>::btree_iterator (node<T> * target, unsigned int data_index, const node<T> * root) :
     root_(root), target_(target), data_index_(data_index) {}
 
@@ -139,6 +143,10 @@ T* btree_iterator<T>::operator->() {
 // ************************* COPY PASTA FOR CONST VERSION ******************************* //
 
 // constructor
+template <typename T>
+const_btree_iterator<T>::const_btree_iterator (const btree_iterator<T>& other) :
+    root_(other.root_), target_(other.target_), data_index_(other.data_index_) {}
+
 template <typename T>
 const_btree_iterator<T>::const_btree_iterator (node<T> * target, unsigned int data_index, const node<T> * root) :
     root_(root), target_(target), data_index_(data_index) {}

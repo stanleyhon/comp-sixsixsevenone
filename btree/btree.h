@@ -138,20 +138,21 @@ class btree {
         friend std::ostream& operator<< <T> (std::ostream& os, const btree<T>& tree);
 
         // Standard
-        iterator begin (); 
-        iterator end ();
+        iterator begin () const; 
+        iterator end () const;
 
         // Reverse
-        reverse_iterator rbegin ();
-        reverse_iterator rend ();
+        reverse_iterator rbegin () const;
+        reverse_iterator rend () const;
 
         // Const Standard
-        const_iterator cbegin ();
-        const_iterator cend ();
+        const_iterator cbegin () const;
+        const_iterator cend () const;
 
         // Const Reverse
+        //std::reverse_iterator<const_btree_iterator<T>> crbegin ();
         const_reverse_iterator crbegin () const;
-        //const_reverse_iterator crend ();
+        const_reverse_iterator crend () const;
 
         /**
          * The following can go here
